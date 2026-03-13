@@ -313,7 +313,7 @@ function getLocationClass(location: string | null): string {
               <UTextarea
                 v-model="createForm.description"
                 placeholder="Brief description of this menu's purpose"
-                :rows="2"
+                :rows="3"
                 class="w-full"
               />
             </UFormField>

@@ -420,7 +420,7 @@ function slugify(str: string): string {
             </div>
 
             <UFormField label="Description">
-              <UTextarea v-model="form.description" placeholder="What is this block for?" :rows="2" />
+              <UTextarea v-model="form.description" placeholder="What is this block for?" :rows="3" />
             </UFormField>
 
             <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
@@ -470,7 +470,7 @@ function slugify(str: string): string {
             </div>
 
             <UFormField label="Description">
-              <UTextarea v-model="form.description" placeholder="What is this block for?" :rows="2" />
+              <UTextarea v-model="form.description" placeholder="What is this block for?" :rows="3" />
             </UFormField>
 
             <div class="border-t border-stone-200 dark:border-stone-700 pt-4">

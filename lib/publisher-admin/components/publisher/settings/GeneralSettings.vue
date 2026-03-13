@@ -136,13 +136,13 @@ function resetSettings() {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
+  <div class="max-w-3xl space-y-6">
     <!-- Header -->
     <div>
-      <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
+      <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
         General Settings
       </h3>
-      <p class="text-sm text-stone-500 dark:text-stone-400">
+      <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
         Configure site-wide settings and defaults
       </p>
     </div>
@@ -175,14 +175,16 @@ function resetSettings() {
             <UInput v-model="settings.siteName" placeholder="Publisher CMS" />
           </UFormField>
           <UFormField label="Site Description" :error="validationErrors.siteDescription?.[0]">
-            <UInput v-model="settings.siteDescription" placeholder="A brief description of your site" />
+            <UTextarea v-model="settings.siteDescription" placeholder="A brief description of your site" :rows="3" />
           </UFormField>
-          <UFormField label="Logo URL" :error="validationErrors.logoUrl?.[0]">
-            <UInput v-model="settings.logoUrl" placeholder="https://example.com/logo.png" />
-          </UFormField>
-          <UFormField label="Favicon URL" :error="validationErrors.faviconUrl?.[0]">
-            <UInput v-model="settings.faviconUrl" placeholder="https://example.com/favicon.ico" />
-          </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="Logo URL" :error="validationErrors.logoUrl?.[0]">
+              <UInput v-model="settings.logoUrl" placeholder="https://example.com/logo.png" />
+            </UFormField>
+            <UFormField label="Favicon URL" :error="validationErrors.faviconUrl?.[0]">
+              <UInput v-model="settings.faviconUrl" placeholder="https://example.com/favicon.ico" />
+            </UFormField>
+          </div>
         </div>
       </section>
 
@@ -192,18 +194,22 @@ function resetSettings() {
           Regional Settings
         </h4>
         <div class="space-y-4">
-          <UFormField label="Timezone" :error="validationErrors.timezone?.[0]">
-            <USelect v-model="settings.timezone" :items="timezoneOptions" />
-          </UFormField>
-          <UFormField label="Locale" :error="validationErrors.locale?.[0]">
-            <USelect v-model="settings.locale" :items="localeOptions" />
-          </UFormField>
-          <UFormField label="Date Format" :error="validationErrors.dateFormat?.[0]">
-            <USelect v-model="settings.dateFormat" :items="dateFormatOptions" />
-          </UFormField>
-          <UFormField label="Time Format" :error="validationErrors.timeFormat?.[0]">
-            <USelect v-model="settings.timeFormat" :items="timeFormatOptions" />
-          </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="Timezone" :error="validationErrors.timezone?.[0]">
+              <USelect v-model="settings.timezone" :items="timezoneOptions" />
+            </UFormField>
+            <UFormField label="Locale" :error="validationErrors.locale?.[0]">
+              <USelect v-model="settings.locale" :items="localeOptions" />
+            </UFormField>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="Date Format" :error="validationErrors.dateFormat?.[0]">
+              <USelect v-model="settings.dateFormat" :items="dateFormatOptions" />
+            </UFormField>
+            <UFormField label="Time Format" :error="validationErrors.timeFormat?.[0]">
+              <USelect v-model="settings.timeFormat" :items="timeFormatOptions" />
+            </UFormField>
+          </div>
         </div>
       </section>
 
@@ -227,7 +233,7 @@ function resetSettings() {
             <UTextarea
               v-model="settings.seo.defaultDescription"
               placeholder="A default description for pages without a custom description"
-              :rows="2"
+              :rows="4"
             />
           </UFormField>
         </div>
@@ -257,7 +263,7 @@ function resetSettings() {
             <UTextarea
               v-model="settings.maintenance.message"
               placeholder="Site is under maintenance. Please check back soon."
-              :rows="2"
+              :rows="3"
             />
           </UFormField>
         </div>
@@ -284,7 +290,8 @@ function resetSettings() {
             <UTextarea
               v-model="settings.analytics.customScripts"
               placeholder="<script>...</script>"
-              :rows="3"
+              :rows="5"
+              class="font-mono text-sm"
             />
           </UFormField>
         </div>

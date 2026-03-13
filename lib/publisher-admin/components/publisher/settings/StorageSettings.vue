@@ -273,14 +273,14 @@ watch(selectedProvider, () => {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
+  <div class="max-w-3xl space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
           Storage Configuration
         </h3>
-        <p class="text-sm text-stone-500 dark:text-stone-400">
+        <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
           Configure where media files are stored
         </p>
       </div>
@@ -351,22 +351,24 @@ watch(selectedProvider, () => {
             />
           </UFormField>
           
-          <UFormField label="Access Key ID" required>
-            <UInput
-              v-model="formState.accessKeyId"
-              type="password"
-              placeholder="R2 access key"
-            />
-          </UFormField>
-          
-          <UFormField label="Secret Access Key" required>
-            <UInput
-              v-model="formState.secretAccessKey"
-              type="password"
-              placeholder="R2 secret key"
-            />
-          </UFormField>
-          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="Access Key ID" required>
+              <UInput
+                v-model="formState.accessKeyId"
+                type="password"
+                placeholder="R2 access key"
+              />
+            </UFormField>
+
+            <UFormField label="Secret Access Key" required>
+              <UInput
+                v-model="formState.secretAccessKey"
+                type="password"
+                placeholder="R2 secret key"
+              />
+            </UFormField>
+          </div>
+
           <UFormField label="Region" hint="Usually 'auto' for R2">
             <USelect
               v-model="formState.region"
@@ -402,21 +404,23 @@ watch(selectedProvider, () => {
             />
           </UFormField>
           
-          <UFormField label="Access Key ID" required>
-            <UInput
-              v-model="formState.accessKeyId"
-              type="password"
-              placeholder="AWS access key"
-            />
-          </UFormField>
-          
-          <UFormField label="Secret Access Key" required>
-            <UInput
-              v-model="formState.secretAccessKey"
-              type="password"
-              placeholder="AWS secret key"
-            />
-          </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="Access Key ID" required>
+              <UInput
+                v-model="formState.accessKeyId"
+                type="password"
+                placeholder="AWS access key"
+              />
+            </UFormField>
+
+            <UFormField label="Secret Access Key" required>
+              <UInput
+                v-model="formState.secretAccessKey"
+                type="password"
+                placeholder="AWS secret key"
+              />
+            </UFormField>
+          </div>
           
           <UFormField label="Custom Endpoint" hint="For MinIO, DigitalOcean Spaces, etc.">
             <UInput

@@ -132,13 +132,13 @@ function resetSettings() {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
+  <div class="max-w-3xl space-y-6">
     <!-- Header -->
     <div>
-      <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
+      <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
         My Preferences
       </h3>
-      <p class="text-sm text-stone-500 dark:text-stone-400">
+      <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
         Personalize your experience
       </p>
     </div>
@@ -167,12 +167,14 @@ function resetSettings() {
           Profile
         </h4>
         <div class="space-y-4">
-          <UFormField label="First Name" required :error="validationErrors['profile.firstName']?.[0]">
-            <UInput v-model="settings.profile.firstName" placeholder="John" />
-          </UFormField>
-          <UFormField label="Last Name" required :error="validationErrors['profile.lastName']?.[0]">
-            <UInput v-model="settings.profile.lastName" placeholder="Doe" />
-          </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="First Name" required :error="validationErrors['profile.firstName']?.[0]">
+              <UInput v-model="settings.profile.firstName" placeholder="John" />
+            </UFormField>
+            <UFormField label="Last Name" required :error="validationErrors['profile.lastName']?.[0]">
+              <UInput v-model="settings.profile.lastName" placeholder="Doe" />
+            </UFormField>
+          </div>
           <UFormField label="Avatar URL"  :error="validationErrors['profile.avatarUrl']?.[0]">
             <UInput v-model="settings.profile.avatarUrl" placeholder="https://example.com/avatar.jpg" />
           </UFormField>
@@ -185,12 +187,14 @@ function resetSettings() {
           UI Preferences
         </h4>
         <div class="space-y-4">
-          <UFormField label="Theme" :error="validationErrors['preferences.theme']?.[0]">
-            <USelect v-model="settings.preferences.theme" :items="themeOptions" />
-          </UFormField>
-          <UFormField label="Items Per Page" :error="validationErrors['preferences.itemsPerPage']?.[0]">
-            <USelect v-model="settings.preferences.itemsPerPage" :items="itemsPerPageOptions" />
-          </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormField label="Theme" :error="validationErrors['preferences.theme']?.[0]">
+              <USelect v-model="settings.preferences.theme" :items="themeOptions" />
+            </UFormField>
+            <UFormField label="Items Per Page" :error="validationErrors['preferences.itemsPerPage']?.[0]">
+              <USelect v-model="settings.preferences.itemsPerPage" :items="itemsPerPageOptions" />
+            </UFormField>
+          </div>
           <UFormField label="Sidebar Collapsed" >
             <div class="flex items-center gap-2">
               <USwitch v-model:checked="settings.preferences.sidebarCollapsed" />
@@ -246,7 +250,7 @@ function resetSettings() {
         <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
           Editor Preferences
         </h4>
-        <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <UFormField label="Default Editor Mode" :error="validationErrors['editor.defaultMode']?.[0]">
             <USelect v-model="settings.editor.defaultMode" :items="editorModeOptions" />
           </UFormField>

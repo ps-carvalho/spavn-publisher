@@ -230,14 +230,14 @@ watch(selectedProvider, () => {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
+  <div class="max-w-3xl space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
           Email Configuration
         </h3>
-        <p class="text-sm text-stone-500 dark:text-stone-400">
+        <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
           Configure how emails are sent from the system
         </p>
       </div>
@@ -266,7 +266,7 @@ watch(selectedProvider, () => {
       <!-- Dynamic Provider Form -->
       <div class="space-y-4 p-4 bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-800">
         <!-- Common Fields -->
-        <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <UFormField label="From Name" required :error="validationErrors.fromName?.[0]">
             <UInput v-model="formState.fromName" placeholder="Publisher CMS" />
           </UFormField>
@@ -277,7 +277,7 @@ watch(selectedProvider, () => {
 
         <!-- SMTP Fields -->
         <template v-if="selectedProvider === 'smtp'">
-          <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <UFormField label="SMTP Host" required :error="validationErrors.host?.[0]">
               <UInput v-model="formState.host" placeholder="smtp.example.com" />
             </UFormField>
@@ -285,7 +285,7 @@ watch(selectedProvider, () => {
               <UInput v-model.number="formState.port" type="number" placeholder="587" />
             </UFormField>
           </div>
-          <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <UFormField label="Username" required :error="validationErrors.username?.[0]">
               <UInput v-model="formState.username" placeholder="user@example.com" />
             </UFormField>

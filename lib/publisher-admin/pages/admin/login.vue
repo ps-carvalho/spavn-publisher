@@ -82,8 +82,8 @@ async function handleResend() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-100 dark:bg-stone-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
+  <div class="min-h-screen bg-gradient-to-br from-stone-100 via-stone-50 to-amber-50/30 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
       <!-- Logo & Heading -->
       <div class="text-center mb-8">
         <UIcon name="i-heroicons-cube-transparent" class="text-amber-600 dark:text-amber-500 text-4xl mb-3" />

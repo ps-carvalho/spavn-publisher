@@ -200,7 +200,7 @@ async function deleteType() {
               <UTextarea
                 v-model="formData.description"
                 placeholder="What is this content type for?"
-                :rows="2"
+                :rows="3"
               />
             </UFormField>
           </div>
