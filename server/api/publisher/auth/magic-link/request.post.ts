@@ -5,7 +5,6 @@ import { generateMagicLinkToken } from '../../../../utils/publisher/magicLink'
 import { checkRateLimit } from '../../../../utils/publisher/rateLimit'
 import { getDefaultEmailProvider } from '../../../../utils/publisher/email'
 import { generateMagicLinkEmail } from '../../../../utils/publisher/email/templates/magic-link'
-import { assertFeatureEnabled } from '../../../../utils/publisher/features'
 
 const requestSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -22,7 +21,6 @@ const requestSchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('magicLinks', 'Magic link')
   const body = await readBody(event)
 
   // Validate input

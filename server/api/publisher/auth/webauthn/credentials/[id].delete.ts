@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { getDb, getSchema } from '../../../../../utils/publisher/database'
-import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
 
 /**
  * DELETE /api/publisher/auth/webauthn/credentials/:id
@@ -12,7 +11,6 @@ import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('webauthn', 'WebAuthn/Passkey')
   // Require authentication
   const user = event.context.publisherUser
   if (!user) {

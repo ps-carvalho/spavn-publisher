@@ -17,27 +17,12 @@ export default {
   },
 
   /**
-   * Feature flags for passwordless authentication methods.
+   * Feature flags for authentication behavior.
    *
-   * Control which authentication methods are available to users.
-   * Passwordless authentication is now the default.
-   * Set environment variables to disable specific methods.
-   *
-   * Environment variables:
-   *   PUBLISHER_ENABLE_MAGIC_LINKS  — Enable email magic link sign-in (default: true)
-   *   PUBLISHER_ENABLE_WEBAUTHN     — Enable passkey/WebAuthn sign-in (default: true)
-   *   PUBLISHER_ENABLE_TOTP         — Enable authenticator app sign-in (default: true)
-   *   PUBLISHER_REQUIRE_PASSWORDLESS — Require passwordless auth (default: true, set to 'false' to allow password)
+   * All authentication methods (magic links, WebAuthn, TOTP) are always
+   * available. Per-user auth requirements are controlled by policies.
    */
   features: {
-    /** Enable magic link (email-based) passwordless authentication */
-    enableMagicLinks: process.env.PUBLISHER_ENABLE_MAGIC_LINKS !== 'false',
-    /** Enable WebAuthn/passkey authentication */
-    enableWebAuthn: process.env.PUBLISHER_ENABLE_WEBAUTHN !== 'false',
-    /** Enable TOTP authenticator app authentication */
-    enableTOTP: process.env.PUBLISHER_ENABLE_TOTP !== 'false',
-    /** Require passwordless auth — password login is disabled by default (set PUBLISHER_REQUIRE_PASSWORDLESS=false to enable) */
-    requirePasswordless: process.env.PUBLISHER_REQUIRE_PASSWORDLESS !== 'false',
     /** Allow users to configure multiple auth methods simultaneously */
     allowMultipleAuthMethods: true,
   },

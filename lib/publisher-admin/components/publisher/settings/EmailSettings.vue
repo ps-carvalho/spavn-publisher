@@ -230,7 +230,7 @@ watch(selectedProvider, () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="max-w-2xl space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
@@ -266,7 +266,7 @@ watch(selectedProvider, () => {
       <!-- Dynamic Provider Form -->
       <div class="space-y-4 p-4 bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-800">
         <!-- Common Fields -->
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-4">
           <UFormField label="From Name" required :error="validationErrors.fromName?.[0]">
             <UInput v-model="formState.fromName" placeholder="Publisher CMS" />
           </UFormField>
@@ -277,7 +277,7 @@ watch(selectedProvider, () => {
 
         <!-- SMTP Fields -->
         <template v-if="selectedProvider === 'smtp'">
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-4">
             <UFormField label="SMTP Host" required :error="validationErrors.host?.[0]">
               <UInput v-model="formState.host" placeholder="smtp.example.com" />
             </UFormField>
@@ -285,7 +285,7 @@ watch(selectedProvider, () => {
               <UInput v-model.number="formState.port" type="number" placeholder="587" />
             </UFormField>
           </div>
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-4">
             <UFormField label="Username" required :error="validationErrors.username?.[0]">
               <UInput v-model="formState.username" placeholder="user@example.com" />
             </UFormField>
@@ -308,7 +308,7 @@ watch(selectedProvider, () => {
 
         <!-- AWS SES Fields -->
         <template v-else-if="selectedProvider === 'ses'">
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-4">
             <UFormField label="Access Key ID" required :error="validationErrors.accessKeyId?.[0]">
               <UInput v-model="formState.accessKeyId" placeholder="AKIAIOSFODNN7EXAMPLE" />
             </UFormField>
@@ -323,7 +323,7 @@ watch(selectedProvider, () => {
 
         <!-- Mailgun Fields -->
         <template v-else-if="selectedProvider === 'mailgun'">
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-4">
             <UFormField label="API Key" required :error="validationErrors.apiKey?.[0]">
               <UInput v-model="formState.apiKey" type="password" placeholder="key-xxxxxxxxxxxxxxxx" />
             </UFormField>

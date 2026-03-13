@@ -3,7 +3,6 @@ import { getDb, getSchema } from '../../../../utils/publisher/database'
 import { hashMagicLinkToken } from '../../../../utils/publisher/magicLink'
 import { createSessionToken } from '../../../../utils/publisher/auth'
 import { trackDeviceLogin } from '../../../../utils/publisher/deviceTracking'
-import { assertFeatureEnabled } from '../../../../utils/publisher/features'
 
 /**
  * GET /api/publisher/auth/magic-link/verify?token=xxx
@@ -20,7 +19,6 @@ import { assertFeatureEnabled } from '../../../../utils/publisher/features'
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('magicLinks', 'Magic link')
   const query = getQuery(event)
   const token = query.token as string | undefined
 

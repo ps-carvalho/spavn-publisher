@@ -276,6 +276,19 @@ export const pgPublisherMenuItems = pgTable('publisher_menu_items', {
   sortOrderIdx: index('publisher_menu_items_sort_order_idx').on(table.sortOrder),
 }))
 
+
+// ─── Security Tables ───────────────────────────────────────────────
+
+/** Security policies per role */
+export const pgPublisherSecurityPolicies = pgTable('publisher_security_policies', {
+  id: serial('id').primaryKey(),
+  role: varchar('role', { length: 50 }).notNull().unique(),
+  require2FA: boolean('require_2fa').notNull().default(false),
+  allowedMethods: jsonb('allowed_methods').$type<string[]>().notNull().default(['magic-link', 'passkey', 'totp']),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+})
+
 // ─── Schema Aggregate ──────────────────────────────────────────────
 // Uses unprefixed property names so loadSchema('postgres') returns
 // the same interface as loadSchema('sqlite') — fully interchangeable.
@@ -301,4 +314,5 @@ export const pgSchema = {
   publisherUserDevices: pgPublisherUserDevices,
   publisherMenus: pgPublisherMenus,
   publisherMenuItems: pgPublisherMenuItems,
+  publisherSecurityPolicies: pgPublisherSecurityPolicies,
 }

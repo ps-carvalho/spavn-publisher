@@ -29,30 +29,26 @@ export default defineNuxtConfig({
     '@nuxt/ui',
   ],
 
+  vite: {
+    server: {
+      hmr: {
+        // When running behind nginx proxy (docker-compose), tell Vite
+        // to connect the HMR websocket to the nginx host/port instead
+        // of the internal container port.
+        clientPort: 8080,
+        path: '/_nuxt/hmr/',
+      },
+    },
+  },
+
   colorMode: {
     preference: 'system',
     fallback: 'light',
     classSuffix: '',
   },
 
-  /**
-   * Runtime configuration for feature flags.
-   *
-   * Public values are exposed to the client and used to conditionally
-   * render authentication method tabs on the login page and settings page.
-   *
-   * These values are read from environment variables at build/start time.
-   * See publisher.config.ts for the canonical feature flag definitions.
-   */
   runtimeConfig: {
-    public: {
-      features: {
-        enableMagicLinks: process.env.PUBLISHER_ENABLE_MAGIC_LINKS !== 'false',
-        enableWebAuthn: process.env.PUBLISHER_ENABLE_WEBAUTHN !== 'false',
-        enableTOTP: process.env.PUBLISHER_ENABLE_TOTP !== 'false',
-        requirePasswordless: process.env.PUBLISHER_REQUIRE_PASSWORDLESS === 'true',
-      },
-    },
+    public: {},
   },
 
 })

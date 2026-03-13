@@ -35,6 +35,7 @@ export interface SchemaMap {
   publisherUserDevices: any
   publisherMenus: any
   publisherMenuItems: any
+  publisherSecurityPolicies: any
 }
 
 /**

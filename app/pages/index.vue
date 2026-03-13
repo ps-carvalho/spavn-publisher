@@ -5,7 +5,7 @@
         <UIcon name="i-heroicons-cube-transparent" class="text-4xl text-amber-600 dark:text-amber-500" />
         <h1 class="text-4xl font-bold text-stone-900 dark:text-stone-100">Publisher</h1>
       </div>
-      <p class="text-lg text-stone-500 dark:text-stone-400 mb-8">Developer-first headless CMS built on Nuxt 4</p>
+      <p class="text-lg text-stone-500 dark:text-stone-400 mb-8">Developer-first headless CMS built with NextJS</p>
       <UButton to="/admin" size="lg" color="neutral">
         Open Admin Panel
       </UButton>

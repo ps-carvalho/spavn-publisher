@@ -14,6 +14,7 @@ const toast = useToast()
 const showFieldModal = ref(false)
 const editingFieldName = ref<string | null>(null)
 const isSubmitting = ref(false)
+const validationErrors = ref<Record<string, string>>({})
 
 // Form state for new/edit field
 const fieldForm = ref({
@@ -133,11 +134,13 @@ function resetForm() {
 function openAddModal() {
   editingFieldName.value = null
   resetForm()
+  validationErrors.value = {}
   showFieldModal.value = true
 }
 
 function openEditModal(fieldName: string, config: FieldConfig) {
   editingFieldName.value = fieldName
+  validationErrors.value = {}
   fieldForm.value = {
     name: fieldName,
     type: config.type,
@@ -161,36 +164,38 @@ function openEditModal(fieldName: string, config: FieldConfig) {
 }
 
 function saveField() {
+  // Clear previous validation errors
+  validationErrors.value = {}
+
+  // Validate field name presence
   if (!fieldForm.value.name.trim()) {
-    toast.add({ title: 'Field name is required', color: 'error' })
-    return
+    validationErrors.value.name = 'Field name is required'
   }
-
-  // Validate field name (alphanumeric + underscore)
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(fieldForm.value.name)) {
-    toast.add({ title: 'Field name must start with a letter or underscore and contain only alphanumeric characters', color: 'error' })
-    return
+  // Validate field name format (alphanumeric + underscore)
+  else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(fieldForm.value.name)) {
+    validationErrors.value.name = 'Must start with a letter or underscore and contain only alphanumeric characters'
   }
-
   // Check for duplicate names (unless editing the same field)
-  if (fieldForm.value.name !== editingFieldName.value && props.modelValue[fieldForm.value.name]) {
-    toast.add({ title: 'A field with this name already exists', color: 'error' })
-    return
+  else if (fieldForm.value.name !== editingFieldName.value && props.modelValue[fieldForm.value.name]) {
+    validationErrors.value.name = 'A field with this name already exists'
   }
 
   // Type-specific validation
   if (fieldForm.value.type === 'uid' && !fieldForm.value.targetField) {
-    toast.add({ title: 'UID field requires a target field', color: 'error' })
-    return
+    validationErrors.value.targetField = 'UID field requires a target field'
   }
 
   if (fieldForm.value.type === 'relation' && !fieldForm.value.relationTo) {
-    toast.add({ title: 'Relation field requires a related content type', color: 'error' })
-    return
+    validationErrors.value.relationTo = 'Relation field requires a related content type'
   }
 
   if (fieldForm.value.type === 'enum' && !fieldForm.value.options.trim()) {
-    toast.add({ title: 'Enum field requires at least one option', color: 'error' })
+    validationErrors.value.options = 'Enum field requires at least one option'
+  }
+
+  // If there are any validation errors, show a summary toast and return
+  if (Object.keys(validationErrors.value).length > 0) {
+    toast.add({ title: 'Please fix the validation errors', color: 'error' })
     return
   }
 
@@ -354,7 +359,7 @@ const showTypeOptions = computed(() => {
 
           <form @submit.prevent="saveField" class="space-y-4">
             <!-- Field name -->
-            <UFormField label="Field Name" required>
+            <UFormField label="Field Name" required :error="validationErrors.name">
               <UInput
                 v-model="fieldForm.name"
                 placeholder="e.g., title, body, price"
@@ -363,7 +368,7 @@ const showTypeOptions = computed(() => {
             </UFormField>
 
             <!-- Field type -->
-            <UFormField label="Type" required>
+            <UFormField label="Type" required :error="validationErrors.type">
               <USelect
                 v-model="fieldForm.type"
                 :items="fieldTypes"
@@ -428,7 +433,7 @@ const showTypeOptions = computed(() => {
 
             <!-- Enum options -->
             <template v-if="showTypeOptions.enum">
-              <UFormField label="Options" hint="Comma-separated values">
+              <UFormField label="Options" hint="Comma-separated values" :error="validationErrors.options">
                 <UInput
                   v-model="fieldForm.options"
                   placeholder="draft, published, archived"
@@ -438,7 +443,7 @@ const showTypeOptions = computed(() => {
 
             <!-- UID options -->
             <template v-if="showTypeOptions.uid">
-              <UFormField label="Target Field" hint="Field to generate slug from">
+              <UFormField label="Target Field" hint="Field to generate slug from" :error="validationErrors.targetField">
                 <USelect
                   v-model="fieldForm.targetField"
                   :items="availableFieldsForTarget.map(f => ({ label: f, value: f }))"
@@ -493,7 +498,7 @@ const showTypeOptions = computed(() => {
             <!-- Relation options -->
             <template v-if="showTypeOptions.relation">
               <div class="grid grid-cols-2 gap-4">
-                <UFormField label="Related Content Type">
+                <UFormField label="Related Content Type" :error="validationErrors.relationTo">
                   <UInput
                     v-model="fieldForm.relationTo"
                     placeholder="e.g., author, category"

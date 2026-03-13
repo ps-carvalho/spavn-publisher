@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm'
 import { getDb, getSchema } from '../../../../../utils/publisher/database'
 import { verifyRegistration, uint8ArrayToBase64url } from '../../../../../utils/publisher/webauthn'
 import { getAndDeleteChallenge } from '../../../../../utils/publisher/challengeStore'
-import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
 
 const verifySchema = z.object({
   response: z.any(),
@@ -20,7 +19,6 @@ const verifySchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('webauthn', 'WebAuthn/Passkey')
   // Require authentication
   const user = event.context.publisherUser
   if (!user) {

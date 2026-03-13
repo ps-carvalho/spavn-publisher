@@ -8,9 +8,15 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { user } = usePublisherAuth()
 
-// Tab configuration
-const items: TabsItem[] = [
+// Whether the current user has admin or super-admin role
+const isAdminUser = computed(() => {
+  return user.value?.role === 'admin' || user.value?.role === 'super-admin'
+})
+
+// All tab definitions (Security Policies is conditionally included based on role)
+const allItems: TabsItem[] = [
   {
     label: 'Storage',
     icon: 'i-heroicons-circle-stack',
@@ -30,23 +36,37 @@ const items: TabsItem[] = [
     slot: 'users' as const,
   },
   {
+    label: 'My Security',
+    icon: 'i-heroicons-shield-check',
+    value: 'my-security',
+    slot: 'my-security' as const,
+  },
+  {
     label: 'Email',
     icon: 'i-heroicons-envelope',
     value: 'email',
     slot: 'email' as const,
   },
   {
-    label: 'Security',
-    icon: 'i-heroicons-shield-check',
-    value: 'security',
-    slot: 'security' as const,
+    label: 'Security Policies',
+    icon: 'i-heroicons-shield-exclamation',
+    value: 'security-policies',
+    slot: 'security-policies' as const,
   },
 ]
+
+// Filter tabs based on user role — Security Policies is admin-only
+const items = computed<TabsItem[]>(() => {
+  if (isAdminUser.value) {
+    return allItems
+  }
+  return allItems.filter(item => item.value !== 'security-policies')
+})
 
 // Get default tab from URL query parameter
 const defaultTab = computed(() => {
   const tabParam = route.query.tab as string
-  if (tabParam && items.some(item => item.value === tabParam)) {
+  if (tabParam && items.value.some(item => item.value === tabParam)) {
     return tabParam
   }
   return 'storage'
@@ -88,26 +108,32 @@ function handleTabChange(value: string) {
         </div>
       </template>
 
-      <template #security>
+      <template #my-security>
         <div class="mt-6 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <div class="text-center py-12">
-            <UIcon name="i-heroicons-finger-print" class="text-4xl text-amber-500 dark:text-amber-400 mb-3" />
-            <p class="text-stone-700 dark:text-stone-300 font-medium">Manage your passkeys and security settings</p>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1 mb-4">
-              Add passkeys for fast, secure passwordless sign-in.
-            </p>
-            <NuxtLink to="/admin/settings/security">
-              <UButton icon="i-heroicons-shield-check" size="sm">
-                Security Settings
-              </UButton>
-            </NuxtLink>
-          </div>
+          <PublisherSettingsMySecuritySettings />
         </div>
       </template>
 
       <template #email>
         <div class="mt-6 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
           <PublisherSettingsEmailSettings />
+        </div>
+      </template>
+
+      <template #security-policies>
+        <div class="mt-6 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+          <div class="text-center py-12">
+            <UIcon name="i-heroicons-shield-exclamation" class="text-4xl text-amber-500 dark:text-amber-400 mb-3" />
+            <p class="text-stone-700 dark:text-stone-300 font-medium">Manage organization security policies</p>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1 mb-4">
+              Configure authentication requirements and security policies for all users.
+            </p>
+            <NuxtLink to="/admin/settings/security">
+              <UButton icon="i-heroicons-shield-exclamation" size="sm">
+                Security Policies
+              </UButton>
+            </NuxtLink>
+          </div>
         </div>
       </template>
     </UTabs>

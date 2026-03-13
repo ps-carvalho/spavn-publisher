@@ -272,6 +272,19 @@ export const publisherMenuItems = sqliteTable('publisher_menu_items', {
   sortOrderIdx: index('publisher_menu_items_sort_order_idx').on(table.sortOrder),
 }))
 
+
+// ─── Security Tables ───────────────────────────────────────────────
+
+/** Security policies per role */
+export const publisherSecurityPolicies = sqliteTable('publisher_security_policies', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  role: text('role', { length: 50 }).notNull().unique(),
+  require2FA: integer('require_2fa', { mode: 'boolean' }).notNull().default(false),
+  allowedMethods: text('allowed_methods', { mode: 'json' }).$type<string[]>().notNull().default(['magic-link', 'passkey', 'totp']),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+})
+
 // ─── Schema Export ─────────────────────────────────────────────────
 
 export const schema = {
@@ -295,4 +308,5 @@ export const schema = {
   publisherUserDevices,
   publisherMenus,
   publisherMenuItems,
+  publisherSecurityPolicies,
 }

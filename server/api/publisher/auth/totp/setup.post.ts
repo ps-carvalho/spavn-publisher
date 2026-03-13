@@ -1,7 +1,6 @@
 import { generateTOTPSecret, generateQRCode } from '../../../../utils/publisher/totp'
 import { checkRateLimit } from '../../../../utils/publisher/rateLimit'
 import { storeChallenge } from '../../../../utils/publisher/challengeStore'
-import { assertFeatureEnabled } from '../../../../utils/publisher/features'
 
 /**
  * POST /api/publisher/auth/totp/setup
@@ -19,7 +18,6 @@ import { assertFeatureEnabled } from '../../../../utils/publisher/features'
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('totp', 'TOTP')
   // Require authentication
   const user = event.context.publisherUser
   if (!user) {

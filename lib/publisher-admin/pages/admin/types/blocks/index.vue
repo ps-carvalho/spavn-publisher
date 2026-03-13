@@ -394,7 +394,7 @@ function slugify(str: string): string {
           <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create Block Type</h3>
 
           <form @submit.prevent="createBlockType" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Display Name" required>
                 <UInput v-model="form.displayName" placeholder="e.g., Hero Section" />
               </UFormField>
@@ -404,7 +404,7 @@ function slugify(str: string): string {
               </UFormField>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Category">
                 <USelect
                   v-model="form.category"
@@ -444,7 +444,7 @@ function slugify(str: string): string {
           <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit Block Type</h3>
 
           <form @submit.prevent="updateBlockType" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Display Name" required>
                 <UInput v-model="form.displayName" placeholder="e.g., Hero Section" />
               </UFormField>
@@ -454,7 +454,7 @@ function slugify(str: string): string {
               </UFormField>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Category">
                 <USelect
                   v-model="form.category"

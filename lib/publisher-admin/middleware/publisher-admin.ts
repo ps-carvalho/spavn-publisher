@@ -25,4 +25,25 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!user.value) {
     return navigateTo('/admin/login')
   }
+
+  // Check security onboarding — redirect to My Security if 2FA is required but not set up.
+  // Cache the result in client-side state to avoid an API call on every navigation.
+  if (to.path !== '/admin/settings' || to.query.tab !== 'my-security') {
+    const onboardingChecked = useState<boolean>('security-onboarding-checked', () => false)
+    const onboardingRequired = useState<boolean>('security-onboarding-required', () => false)
+
+    if (!onboardingChecked.value) {
+      try {
+        const onboarding = await $fetch('/api/publisher/auth/security-onboarding')
+        onboardingRequired.value = !!onboarding.required
+        onboardingChecked.value = true
+      } catch {
+        // Don't block navigation on error
+      }
+    }
+
+    if (onboardingRequired.value) {
+      return navigateTo('/admin/settings?tab=my-security&onboarding=required')
+    }
+  }
 })

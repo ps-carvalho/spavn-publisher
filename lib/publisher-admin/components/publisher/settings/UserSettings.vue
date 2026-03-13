@@ -132,7 +132,7 @@ function resetSettings() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="max-w-2xl space-y-6">
     <!-- Header -->
     <div>
       <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
@@ -166,14 +166,14 @@ function resetSettings() {
         <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
           Profile
         </h4>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-4">
           <UFormField label="First Name" required :error="validationErrors['profile.firstName']?.[0]">
             <UInput v-model="settings.profile.firstName" placeholder="John" />
           </UFormField>
           <UFormField label="Last Name" required :error="validationErrors['profile.lastName']?.[0]">
             <UInput v-model="settings.profile.lastName" placeholder="Doe" />
           </UFormField>
-          <UFormField label="Avatar URL" class="sm:col-span-2" :error="validationErrors['profile.avatarUrl']?.[0]">
+          <UFormField label="Avatar URL"  :error="validationErrors['profile.avatarUrl']?.[0]">
             <UInput v-model="settings.profile.avatarUrl" placeholder="https://example.com/avatar.jpg" />
           </UFormField>
         </div>
@@ -184,14 +184,14 @@ function resetSettings() {
         <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
           UI Preferences
         </h4>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-4">
           <UFormField label="Theme" :error="validationErrors['preferences.theme']?.[0]">
             <USelect v-model="settings.preferences.theme" :items="themeOptions" />
           </UFormField>
           <UFormField label="Items Per Page" :error="validationErrors['preferences.itemsPerPage']?.[0]">
             <USelect v-model="settings.preferences.itemsPerPage" :items="itemsPerPageOptions" />
           </UFormField>
-          <UFormField label="Sidebar Collapsed" class="sm:col-span-2">
+          <UFormField label="Sidebar Collapsed" >
             <div class="flex items-center gap-2">
               <USwitch v-model:checked="settings.preferences.sidebarCollapsed" />
               <span class="text-sm text-stone-600 dark:text-stone-400">
@@ -246,7 +246,7 @@ function resetSettings() {
         <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
           Editor Preferences
         </h4>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-4">
           <UFormField label="Default Editor Mode" :error="validationErrors['editor.defaultMode']?.[0]">
             <USelect v-model="settings.editor.defaultMode" :items="editorModeOptions" />
           </UFormField>

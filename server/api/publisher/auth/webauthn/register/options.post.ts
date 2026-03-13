@@ -3,7 +3,6 @@ import { getDb, getSchema } from '../../../../../utils/publisher/database'
 import { generateRegistrationOpts, getWebAuthnConfig } from '../../../../../utils/publisher/webauthn'
 import { storeChallenge } from '../../../../../utils/publisher/challengeStore'
 import { checkRateLimit } from '../../../../../utils/publisher/rateLimit'
-import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
 
 /**
  * POST /api/publisher/auth/webauthn/register/options
@@ -16,7 +15,6 @@ import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('webauthn', 'WebAuthn/Passkey')
   // Require authentication (middleware sets event.context.publisherUser)
   const user = event.context.publisherUser
   if (!user) {

@@ -160,8 +160,6 @@ import { startAuthentication } from '@simplewebauthn/browser'
               v-if="passkeySupported"
               block
               size="lg"
-              color="neutral"
-              variant="outline"
               icon="i-heroicons-finger-print"
               :loading="passkeyLoading"
               @click="handlePasskeySubmit"
@@ -213,6 +211,8 @@ import { startAuthentication } from '@simplewebauthn/browser'
                 type="submit"
                 block
                 size="lg"
+                variant="outline"
+                color="neutral"
                 :loading="totpLoading"
                 icon="i-heroicons-shield-check"
               >

@@ -136,7 +136,7 @@ function resetSettings() {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="max-w-2xl space-y-6">
     <!-- Header -->
     <div>
       <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
@@ -170,7 +170,7 @@ function resetSettings() {
         <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
           Site Identity
         </h4>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-4">
           <UFormField label="Site Name" required :error="validationErrors.siteName?.[0]">
             <UInput v-model="settings.siteName" placeholder="Publisher CMS" />
           </UFormField>
@@ -191,7 +191,7 @@ function resetSettings() {
         <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
           Regional Settings
         </h4>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-4">
           <UFormField label="Timezone" :error="validationErrors.timezone?.[0]">
             <USelect v-model="settings.timezone" :items="timezoneOptions" />
           </UFormField>

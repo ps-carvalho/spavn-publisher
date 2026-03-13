@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm'
 import { getDb, getSchema } from '../../../../utils/publisher/database'
 import { verifyTOTP, hashBackupCode } from '../../../../utils/publisher/totp'
 import { getAndDeleteChallenge } from '../../../../utils/publisher/challengeStore'
-import { assertFeatureEnabled } from '../../../../utils/publisher/features'
 
 const verifySchema = z.object({
   token: z.string().length(6, 'TOTP code must be 6 digits'),
@@ -23,7 +22,6 @@ const verifySchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('totp', 'TOTP')
   // Require authentication
   const user = event.context.publisherUser
   if (!user) {

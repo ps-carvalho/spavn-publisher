@@ -1,22 +1,15 @@
 import { eq } from 'drizzle-orm'
 import { getDb, getSchema } from '../../../../utils/publisher/database'
-import { isFeatureEnabled } from '../../../../utils/publisher/features'
 
 /**
  * GET /api/publisher/auth/totp/status
  *
  * Check if the current user has TOTP enabled.
- * Returns { enabled: boolean, featureEnabled: boolean }.
- *
- * If the TOTP feature flag is disabled, returns { enabled: false, featureEnabled: false }.
+ * Returns { enabled: boolean }.
  *
  * Requires authentication.
  */
 export default defineEventHandler(async (event) => {
-  // If TOTP feature is disabled, return early
-  if (!isFeatureEnabled('totp')) {
-    return { enabled: false, featureEnabled: false }
-  }
   // Require authentication
   const user = event.context.publisherUser
   if (!user) {

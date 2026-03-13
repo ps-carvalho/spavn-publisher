@@ -87,7 +87,7 @@ async function handleResend() {
       <!-- Logo & Heading -->
       <div class="text-center mb-8">
         <UIcon name="i-heroicons-cube-transparent" class="text-amber-600 dark:text-amber-500 text-4xl mb-3" />
-        <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Publisher</h1>
+        <h1 class="text-3xl font-bold text-stone-900 dark:text-stone-100">Publisher</h1>
         <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">Sign in to your account</p>
       </div>
 

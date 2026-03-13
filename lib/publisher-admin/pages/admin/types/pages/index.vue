@@ -417,7 +417,7 @@ function slugify(str: string): string {
           <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create Page Type</h3>
 
           <form @submit.prevent="createPageType" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Display Name" required>
                 <UInput v-model="form.displayName" placeholder="e.g., Landing Page" />
               </UFormField>
@@ -427,7 +427,7 @@ function slugify(str: string): string {
               </UFormField>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Icon">
                 <UInput v-model="form.icon" placeholder="e.g., i-heroicons-document" />
               </UFormField>
@@ -440,7 +440,7 @@ function slugify(str: string): string {
             <!-- Options -->
             <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
               <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Options</h4>
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -523,7 +523,7 @@ function slugify(str: string): string {
           <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit Page Type</h3>
 
           <form @submit.prevent="updatePageType" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Display Name" required>
                 <UInput v-model="form.displayName" placeholder="e.g., Landing Page" />
               </UFormField>
@@ -533,7 +533,7 @@ function slugify(str: string): string {
               </UFormField>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Icon">
                 <UInput v-model="form.icon" placeholder="e.g., i-heroicons-document" />
               </UFormField>
@@ -546,7 +546,7 @@ function slugify(str: string): string {
             <!-- Options -->
             <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
               <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Options</h4>
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -631,7 +631,7 @@ function slugify(str: string): string {
           </h3>
 
           <form @submit.prevent="saveArea" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Display Name" required>
                 <UInput v-model="areaForm.displayName" placeholder="e.g., Main Content" />
               </UFormField>
@@ -668,7 +668,7 @@ function slugify(str: string): string {
               </div>
             </UFormField>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <UFormField label="Min Blocks" hint="Minimum blocks required">
                 <UInput v-model.number="areaForm.minBlocks" type="number" min="0" />
               </UFormField>

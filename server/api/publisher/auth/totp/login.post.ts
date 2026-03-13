@@ -5,7 +5,6 @@ import { verifyTOTP, verifyBackupCode } from '../../../../utils/publisher/totp'
 import { createSessionToken } from '../../../../utils/publisher/auth'
 import { checkRateLimit } from '../../../../utils/publisher/rateLimit'
 import { trackDeviceLogin } from '../../../../utils/publisher/deviceTracking'
-import { assertFeatureEnabled } from '../../../../utils/publisher/features'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,7 +25,6 @@ const loginSchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('totp', 'TOTP')
   const body = await readBody(event)
 
   // Validate input

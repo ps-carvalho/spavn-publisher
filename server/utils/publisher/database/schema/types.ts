@@ -29,6 +29,7 @@ import type {
   publisherTOTPSecrets,
   publisherMagicLinkTokens,
   publisherUserDevices,
+  publisherSecurityPolicies,
 } from './sqlite'
 
 // ─── User Types ────────────────────────────────────────────────────
@@ -149,6 +150,13 @@ export type NewMagicLinkToken = InferInsertModel<typeof publisherMagicLinkTokens
 export type UserDevice = InferSelectModel<typeof publisherUserDevices>
 /** User device record for insertion */
 export type NewUserDevice = InferInsertModel<typeof publisherUserDevices>
+
+// ─── Security Policy Types ───────────────────────────────────────────
+
+/** Security policy record as stored in the database */
+export type SecurityPolicy = InferSelectModel<typeof publisherSecurityPolicies>
+/** Security policy record for insertion */
+export type NewSecurityPolicy = InferInsertModel<typeof publisherSecurityPolicies>
 
 // ─── Auth Method Type ───────────────────────────────────────────────
 

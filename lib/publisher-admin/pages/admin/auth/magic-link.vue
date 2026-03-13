@@ -98,6 +98,8 @@ onMounted(async () => {
             <UButton
               block
               size="lg"
+              variant="outline"
+              color="neutral"
               to="/admin/login"
               icon="i-heroicons-envelope"
               @click.prevent="navigateTo('/admin/login')"

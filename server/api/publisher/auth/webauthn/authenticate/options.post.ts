@@ -4,7 +4,6 @@ import { getDb, getSchema } from '../../../../../utils/publisher/database'
 import { generateAuthenticationOpts } from '../../../../../utils/publisher/webauthn'
 import { storeChallenge } from '../../../../../utils/publisher/challengeStore'
 import { checkRateLimit } from '../../../../../utils/publisher/rateLimit'
-import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
 import { verifySessionToken } from '../../../../../utils/publisher/auth'
 
 const optionsSchema = z.object({
@@ -24,7 +23,6 @@ const optionsSchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('webauthn', 'WebAuthn/Passkey')
 
   const db = await getDb() as any
   const { publisherUsers, publisherWebAuthnCredentials } = await getSchema()

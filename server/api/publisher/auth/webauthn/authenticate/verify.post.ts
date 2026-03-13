@@ -5,7 +5,6 @@ import { verifyAuthentication } from '../../../../../utils/publisher/webauthn'
 import { getAndDeleteChallenge } from '../../../../../utils/publisher/challengeStore'
 import { createSessionToken } from '../../../../../utils/publisher/auth'
 import { trackDeviceLogin } from '../../../../../utils/publisher/deviceTracking'
-import { assertFeatureEnabled } from '../../../../../utils/publisher/features'
 
 const verifySchema = z.object({
   response: z.any(),
@@ -22,7 +21,6 @@ const verifySchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   // Check feature flag
-  assertFeatureEnabled('webauthn', 'WebAuthn/Passkey')
   const body = await readBody(event)
 
   // Validate input
