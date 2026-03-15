@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import type { StorageConfig, AnyStorageConfig } from '~/server/utils/publisher/storage/types'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { AlertTriangle, Check, CheckCircle, XCircle, RefreshCw, Signal, Loader2 } from 'lucide-vue-next'
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 
@@ -14,7 +22,7 @@ const testResult = ref<{ success: boolean; message: string; duration?: number } 
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 
-const toast = useToast()
+const { toast } = useToast()
 
 // ─── Provider Options ───────────────────────────────────────────────────────────
 
@@ -37,10 +45,10 @@ const regionOptions = [
 
 const hasUnsavedChanges = computed(() => {
   if (!config.value?.providers) return Object.keys(formState.value).length > 0
-  
+
   const currentConfig = config.value.providers[selectedProvider.value]
   if (!currentConfig) return Object.keys(formState.value).length > 0
-  
+
   return JSON.stringify(formState.value) !== JSON.stringify(currentConfig)
 })
 
@@ -55,7 +63,7 @@ onMounted(async () => {
 async function loadConfig() {
   loading.value = true
   testResult.value = null
-  
+
   try {
     const response = await $fetch<{
       providers: Record<string, AnyStorageConfig>
@@ -63,7 +71,7 @@ async function loadConfig() {
       defaultProvider: string | null
       defaults: StorageConfig['defaults'] | null
     }>('/api/publisher/storage/config')
-    
+
     config.value = {
       providers: response.providers,
       defaultProvider: response.defaultProvider || undefined,
@@ -71,13 +79,13 @@ async function loadConfig() {
     }
     providerNames.value = response.providerNames
     selectedProvider.value = response.defaultProvider || 'local'
-    
+
     initializeFormState()
   } catch (error) {
-    toast.add({
+    toast({
       title: 'Failed to load storage configuration',
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     loading.value = false
@@ -87,7 +95,7 @@ async function loadConfig() {
 function initializeFormState() {
   // Reset form state
   formState.value = {}
-  
+
   if (config.value?.providers?.[selectedProvider.value]) {
     // Copy current provider config to form state
     formState.value = { ...config.value.providers[selectedProvider.value] }
@@ -137,7 +145,7 @@ function getDefaultConfigForProvider(type: 'local' | 'r2' | 's3'): Record<string
 async function testConnection() {
   testing.value = true
   testResult.value = null
-  
+
   try {
     const response = await $fetch<{
       success: boolean
@@ -149,7 +157,7 @@ async function testConnection() {
       method: 'POST',
       body: { provider: selectedProvider.value },
     })
-    
+
     testResult.value = {
       success: response.success,
       message: response.success
@@ -157,24 +165,24 @@ async function testConnection() {
         : response.error || 'Connection failed',
       duration: response.duration,
     }
-    
-    toast.add({
+
+    toast({
       title: response.success ? 'Connection successful' : 'Connection failed',
-      description: response.success 
+      description: response.success
         ? `Test completed in ${response.duration}ms`
         : response.error || 'Please check your configuration',
-      color: response.success ? 'success' : 'error',
+      variant: response.success ? undefined : 'destructive',
     })
   } catch (error) {
     testResult.value = {
       success: false,
       message: error instanceof Error ? error.message : 'Connection test failed',
     }
-    
-    toast.add({
+
+    toast({
       title: 'Connection test failed',
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     testing.value = false
@@ -183,14 +191,14 @@ async function testConnection() {
 
 async function saveConfig() {
   saving.value = true
-  
+
   try {
     // Build the provider config with correct type
     const providerConfig = {
       ...formState.value,
       type: selectedProvider.value,
     } as AnyStorageConfig
-    
+
     // Build new config preserving existing providers
     const newConfig: StorageConfig = {
       providers: {
@@ -200,7 +208,7 @@ async function saveConfig() {
       defaultProvider: selectedProvider.value,
       defaults: config.value?.defaults,
     }
-    
+
     const response = await $fetch<{
       success: boolean
       message: string
@@ -222,16 +230,15 @@ async function saveConfig() {
         testConnectivity: true,
       },
     })
-    
+
     if (response.success) {
-      toast.add({
+      toast({
         title: 'Configuration saved',
         description: response.validation.warnings?.length
           ? `${response.validation.warnings.length} warning(s) found`
           : 'Storage settings have been updated',
-        color: 'success',
       })
-      
+
       // Reload config to get masked values
       await loadConfig()
     } else {
@@ -239,18 +246,18 @@ async function saveConfig() {
       const errorMessages = response.validation.errors
         ?.map(e => `${e.field}: ${e.message}`)
         .join(', ') || response.message
-        
-      toast.add({
+
+      toast({
         title: 'Validation failed',
         description: errorMessages,
-        color: 'error',
+        variant: 'destructive',
       })
     }
   } catch (error) {
-    toast.add({
+    toast({
       title: 'Failed to save configuration',
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     saving.value = false
@@ -277,26 +284,25 @@ watch(selectedProvider, () => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
+        <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] tracking-tight">
           Storage Configuration
         </h3>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
           Configure where media files are stored
         </p>
       </div>
-      <UBadge
+      <Badge
         v-if="config?.defaultProvider"
-        color="neutral"
-        variant="subtle"
+        variant="outline"
       >
         Default: {{ config.defaultProvider }}
-      </UBadge>
+      </Badge>
     </div>
 
     <!-- Loading state -->
     <div v-if="loading" class="py-8 text-center">
-      <UIcon name="i-heroicons-arrow-path" class="text-2xl animate-spin text-stone-400" />
-      <p class="mt-2 text-sm text-stone-500 dark:text-stone-400">
+      <RefreshCw class="mx-auto h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))]" />
+      <p class="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
         Loading configuration...
       </p>
     </div>
@@ -304,145 +310,193 @@ watch(selectedProvider, () => {
     <!-- Config form -->
     <div v-else class="space-y-6">
       <!-- Provider Selection -->
-      <UFormField label="Storage Provider" required>
-        <USelect
+      <div class="space-y-2">
+        <Label>Storage Provider <span class="text-[hsl(var(--destructive))]">*</span></Label>
+        <Select
           :model-value="selectedProvider"
-          :items="providerOptions"
           @update:model-value="handleProviderChange"
-        />
-      </UFormField>
+        >
+          <SelectTrigger><SelectValue placeholder="Select provider" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="opt in providerOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <!-- Dynamic Provider Form -->
-      <div class="space-y-4 p-4 bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-800">
+      <div class="space-y-4 p-4 bg-[hsl(var(--background))] rounded-lg border border-[hsl(var(--border))]">
         <!-- Local Provider Fields -->
         <template v-if="selectedProvider === 'local'">
-          <UFormField label="Base Path" hint="Directory where files are stored">
-            <UInput
+          <div class="space-y-2">
+            <Label for="basePath">Base Path</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Directory where files are stored</p>
+            <Input
+              id="basePath"
               v-model="formState.basePath"
               placeholder="./public/uploads"
             />
-          </UFormField>
-          
-          <UFormField label="Base URL" hint="URL path for serving files">
-            <UInput
+          </div>
+
+          <div class="space-y-2">
+            <Label for="baseUrl">Base URL</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">URL path for serving files</p>
+            <Input
+              id="baseUrl"
               v-model="formState.baseUrl"
               placeholder="/uploads"
             />
-          </UFormField>
-          
-          <UFormField label="Create Directories" hint="Automatically create directories">
-            <USwitch v-model:checked="formState.createDirectories" />
-          </UFormField>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Create Directories</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Automatically create directories</p>
+            <Switch v-model:checked="formState.createDirectories" />
+          </div>
         </template>
 
         <!-- R2 Provider Fields -->
         <template v-else-if="selectedProvider === 'r2'">
-          <UFormField label="Account ID" required>
-            <UInput
+          <div class="space-y-2">
+            <Label for="accountId">Account ID <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              id="accountId"
               v-model="formState.accountId"
               placeholder="Your Cloudflare account ID"
             />
-          </UFormField>
-          
-          <UFormField label="Bucket Name" required>
-            <UInput
+          </div>
+
+          <div class="space-y-2">
+            <Label for="bucket">Bucket Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              id="bucket"
               v-model="formState.bucket"
               placeholder="my-bucket"
             />
-          </UFormField>
-          
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="Access Key ID" required>
-              <UInput
+            <div class="space-y-2">
+              <Label for="accessKeyId">Access Key ID <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input
+                id="accessKeyId"
                 v-model="formState.accessKeyId"
                 type="password"
                 placeholder="R2 access key"
               />
-            </UFormField>
+            </div>
 
-            <UFormField label="Secret Access Key" required>
-              <UInput
+            <div class="space-y-2">
+              <Label for="secretAccessKey">Secret Access Key <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input
+                id="secretAccessKey"
                 v-model="formState.secretAccessKey"
                 type="password"
                 placeholder="R2 secret key"
               />
-            </UFormField>
+            </div>
           </div>
 
-          <UFormField label="Region" hint="Usually 'auto' for R2">
-            <USelect
-              v-model="formState.region"
-              :items="regionOptions"
-            />
-          </UFormField>
-          
-          <UFormField label="Custom Domain" hint="Optional CDN domain">
-            <UInput
+          <div class="space-y-2">
+            <Label>Region</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Usually 'auto' for R2</p>
+            <Select v-model="formState.region">
+              <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in regionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="space-y-2">
+            <Label for="customDomain">Custom Domain</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Optional CDN domain</p>
+            <Input
+              id="customDomain"
               v-model="formState.customDomain"
               placeholder="https://cdn.example.com"
             />
-          </UFormField>
-          
-          <UFormField label="Public Bucket" hint="Enable for public read access">
-            <USwitch v-model:checked="formState.public" />
-          </UFormField>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Public Bucket</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Enable for public read access</p>
+            <Switch v-model:checked="formState.public" />
+          </div>
         </template>
 
         <!-- S3 Provider Fields -->
         <template v-else-if="selectedProvider === 's3'">
-          <UFormField label="Bucket Name" required>
-            <UInput
+          <div class="space-y-2">
+            <Label for="s3Bucket">Bucket Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              id="s3Bucket"
               v-model="formState.bucket"
               placeholder="my-bucket"
             />
-          </UFormField>
-          
-          <UFormField label="Region" required>
-            <UInput
+          </div>
+
+          <div class="space-y-2">
+            <Label for="s3Region">Region <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              id="s3Region"
               v-model="formState.region"
               placeholder="us-east-1"
             />
-          </UFormField>
-          
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="Access Key ID" required>
-              <UInput
+            <div class="space-y-2">
+              <Label for="s3AccessKeyId">Access Key ID <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input
+                id="s3AccessKeyId"
                 v-model="formState.accessKeyId"
                 type="password"
                 placeholder="AWS access key"
               />
-            </UFormField>
+            </div>
 
-            <UFormField label="Secret Access Key" required>
-              <UInput
+            <div class="space-y-2">
+              <Label for="s3SecretAccessKey">Secret Access Key <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input
+                id="s3SecretAccessKey"
                 v-model="formState.secretAccessKey"
                 type="password"
                 placeholder="AWS secret key"
               />
-            </UFormField>
+            </div>
           </div>
-          
-          <UFormField label="Custom Endpoint" hint="For MinIO, DigitalOcean Spaces, etc.">
-            <UInput
+
+          <div class="space-y-2">
+            <Label for="s3Endpoint">Custom Endpoint</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">For MinIO, DigitalOcean Spaces, etc.</p>
+            <Input
+              id="s3Endpoint"
               v-model="formState.endpoint"
               placeholder="https://s3.example.com"
             />
-          </UFormField>
-          
-          <UFormField label="Custom Domain" hint="Optional CDN domain">
-            <UInput
+          </div>
+
+          <div class="space-y-2">
+            <Label for="s3CustomDomain">Custom Domain</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Optional CDN domain</p>
+            <Input
+              id="s3CustomDomain"
               v-model="formState.customDomain"
               placeholder="https://cdn.example.com"
             />
-          </UFormField>
-          
-          <UFormField label="Force Path Style" hint="Required for MinIO">
-            <USwitch v-model:checked="formState.forcePathStyle" />
-          </UFormField>
-          
-          <UFormField label="Public Bucket" hint="Enable for public read access">
-            <USwitch v-model:checked="formState.public" />
-          </UFormField>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Force Path Style</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Required for MinIO</p>
+            <Switch v-model:checked="formState.forcePathStyle" />
+          </div>
+
+          <div class="space-y-2">
+            <Label>Public Bucket</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Enable for public read access</p>
+            <Switch v-model:checked="formState.public" />
+          </div>
         </template>
       </div>
 
@@ -453,16 +507,14 @@ watch(selectedProvider, () => {
           'p-4 rounded-lg border',
           testResult.success
             ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-            : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+            : 'bg-[hsl(var(--destructive)/0.1)] border-[hsl(var(--destructive)/0.3)]'
         ]"
       >
         <div class="flex items-center gap-2">
-          <UIcon
-            :name="testResult.success ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
-            :class="testResult.success ? 'text-green-600' : 'text-red-600'"
-          />
+          <CheckCircle v-if="testResult.success" class="h-5 w-5 text-green-600" />
+          <XCircle v-else class="h-5 w-5 text-[hsl(var(--destructive))]" />
           <span
-            :class="testResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'"
+            :class="testResult.success ? 'text-green-700 dark:text-green-300' : 'text-[hsl(var(--destructive))]'"
           >
             {{ testResult.message }}
             <span v-if="testResult.duration" class="text-sm opacity-75">
@@ -475,42 +527,36 @@ watch(selectedProvider, () => {
       <!-- Unsaved Changes Warning -->
       <div
         v-if="hasUnsavedChanges"
-        class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800"
+        class="p-3 rounded-lg bg-[hsl(var(--accent))] border border-[hsl(var(--border))]"
       >
         <div class="flex items-center gap-2">
-          <UIcon name="i-heroicons-exclamation-triangle" class="text-amber-600" />
-          <span class="text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle class="h-4 w-4 text-[hsl(var(--primary))]" />
+          <span class="text-sm text-[hsl(var(--foreground))]">
             You have unsaved changes
           </span>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
-        <UButton
+      <div class="flex gap-3 pt-4 border-t border-[hsl(var(--border))]">
+        <Button
           variant="outline"
-          color="neutral"
-          :loading="testing"
           :disabled="saving"
           @click="testConnection"
         >
-          <template v-if="!testing">
-            <UIcon name="i-heroicons-signal" class="mr-1" />
-          </template>
+          <Loader2 v-if="testing" class="h-4 w-4 mr-2 animate-spin" />
+          <Signal v-else class="h-4 w-4 mr-2" />
           Test Connection
-        </UButton>
-        
-        <UButton
-          color="neutral"
-          :loading="saving"
+        </Button>
+
+        <Button
           :disabled="testing"
           @click="saveConfig"
         >
-          <template v-if="!saving">
-            <UIcon name="i-heroicons-check" class="mr-1" />
-          </template>
+          <Loader2 v-if="saving" class="h-4 w-4 mr-2 animate-spin" />
+          <Check v-else class="h-4 w-4 mr-2" />
           Save Configuration
-        </UButton>
+        </Button>
       </div>
     </div>
   </div>

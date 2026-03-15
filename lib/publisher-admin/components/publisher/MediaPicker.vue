@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { MediaItem } from '~~/lib/publisher-admin/types/media'
+import { Button } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@spavn/ui'
+import { FolderOpen, X, Image, Folder } from 'lucide-vue-next'
 
 interface MediaPickerProps {
   modelValue: number | number[] | null
@@ -68,7 +71,7 @@ function formatFileSize(bytes: number): string {
 // Format dimensions for display
 function formatDimensions(width?: number, height?: number): string {
   if (!width || !height) return ''
-  return `${width}×${height}`
+  return `${width}x${height}`
 }
 
 // Get thumbnail URL (use small format if available)
@@ -82,13 +85,10 @@ function getThumbnailUrl(media: MediaItem): string {
   return media.url
 }
 
-// Determine icon based on mime type
-function getMediaIcon(mimeType: string): string {
-  if (mimeType.startsWith('image/')) return 'i-heroicons-photo'
-  if (mimeType.startsWith('video/')) return 'i-heroicons-video-camera'
-  if (mimeType.startsWith('audio/')) return 'i-heroicons-musical-note'
-  if (mimeType.includes('pdf')) return 'i-heroicons-document-text'
-  return 'i-heroicons-document'
+// Determine icon component based on mime type
+function getMediaIconComponent(mimeType: string) {
+  if (mimeType.startsWith('image/')) return Image
+  return Image // fallback
 }
 
 // Fetch media metadata for preview
@@ -182,7 +182,7 @@ const fileBrowserMode = computed(() => {
 <template>
   <div class="media-picker">
     <!-- Label -->
-    <label v-if="label" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+    <label v-if="label" class="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
       {{ label }}
     </label>
 
@@ -190,7 +190,7 @@ const fileBrowserMode = computed(() => {
     <div class="flex items-start gap-3">
       <!-- Thumbnail / Placeholder -->
       <div
-        class="w-20 h-20 flex-shrink-0 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 flex items-center justify-center overflow-hidden"
+        class="w-20 h-20 flex-shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] flex items-center justify-center overflow-hidden"
       >
         <template v-if="primaryMedia">
           <img
@@ -199,16 +199,15 @@ const fileBrowserMode = computed(() => {
             :alt="primaryMedia.alternativeText || primaryMedia.originalName"
             class="w-full h-full object-cover"
           >
-          <UIcon
+          <component
             v-else
-            :name="getMediaIcon(primaryMedia.mimeType)"
-            class="w-8 h-8 text-stone-400 dark:text-stone-500"
+            :is="getMediaIconComponent(primaryMedia.mimeType)"
+            class="w-8 h-8 text-[hsl(var(--muted-foreground))]"
           />
         </template>
-        <UIcon
+        <Image
           v-else
-          name="i-heroicons-photo"
-          class="w-8 h-8 text-stone-300 dark:text-stone-600"
+          class="w-8 h-8 text-[hsl(var(--muted-foreground))]"
         />
       </div>
 
@@ -216,93 +215,91 @@ const fileBrowserMode = computed(() => {
       <div class="flex-1 min-w-0">
         <!-- Selection info -->
         <div v-if="primaryMedia" class="mb-2">
-          <p class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
+          <p class="text-sm font-medium text-[hsl(var(--foreground))] truncate">
             {{ primaryMedia.originalName }}
           </p>
-          <p class="text-xs text-stone-500 dark:text-stone-400">
+          <p class="text-xs text-[hsl(var(--muted-foreground))]">
             <template v-if="formatDimensions(primaryMedia.width, primaryMedia.height)">
               {{ formatDimensions(primaryMedia.width, primaryMedia.height) }} •
             </template>
             {{ formatFileSize(primaryMedia.size) }}
           </p>
           <!-- Multiple selection count -->
-          <p v-if="multiple && multipleIds.length > 1" class="text-xs text-stone-500 dark:text-stone-400 mt-1">
+          <p v-if="multiple && multipleIds.length > 1" class="text-xs text-[hsl(var(--muted-foreground))] mt-1">
             +{{ multipleIds.length - 1 }} more selected
           </p>
         </div>
-        <p v-else class="text-sm text-stone-400 dark:text-stone-500 mb-2">
+        <p v-else class="text-sm text-[hsl(var(--muted-foreground))] mb-2">
           No media selected
         </p>
 
         <!-- Action buttons -->
         <div class="flex items-center gap-2">
-          <UButton
+          <Button
             variant="outline"
-            color="neutral"
-            icon="i-heroicons-folder-open"
             size="sm"
             @click="openModal"
           >
+            <FolderOpen class="h-4 w-4 mr-2" />
             Browse
-          </UButton>
-          <UButton
+          </Button>
+          <Button
             v-if="hasSelection"
             variant="ghost"
-            color="neutral"
-            icon="i-heroicons-x-mark"
             size="sm"
             @click="clearSelection"
           >
+            <X class="h-4 w-4 mr-2" />
             Clear
-          </UButton>
+          </Button>
         </div>
       </div>
     </div>
 
     <!-- Modal -->
-    <UModal v-model:open="isOpen" :ui="{ content: 'max-w-4xl', body: 'p-0' }">
-      <template #content>
+    <Dialog v-model:open="isOpen">
+      <DialogContent class="max-w-4xl p-0">
         <div class="h-[70vh] flex flex-col">
           <!-- Modal header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-stone-200 dark:border-stone-700 flex-shrink-0">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] flex-shrink-0">
             <div class="flex items-center gap-3">
-              <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
-                {{ selectionMode === 'folder' ? 'Select a Folder' : (multiple ? 'Select Media' : 'Select a Media Item') }}
-              </h3>
+              <DialogHeader>
+                <DialogTitle>
+                  {{ selectionMode === 'folder' ? 'Select a Folder' : (multiple ? 'Select Media' : 'Select a Media Item') }}
+                </DialogTitle>
+              </DialogHeader>
               <!-- Mode toggle button (only when folder selection is allowed) -->
               <div
                 v-if="allowFolderSelection"
-                class="flex items-center border border-stone-200 dark:border-stone-700 rounded-lg overflow-hidden"
+                class="flex items-center border border-[hsl(var(--border))] rounded-lg overflow-hidden"
               >
-                <UButton
-                  :color="selectionMode === 'files' ? 'neutral' : 'neutral'"
-                  :variant="selectionMode === 'files' ? 'solid' : 'ghost'"
-                  icon="i-heroicons-photo"
-                  size="xs"
+                <Button
+                  :variant="selectionMode === 'files' ? 'default' : 'ghost'"
+                  size="sm"
                   class="rounded-none"
                   @click="selectionMode = 'files'"
                 >
+                  <Image class="h-4 w-4 mr-2" />
                   Files
-                </UButton>
-                <UButton
-                  :color="selectionMode === 'folder' ? 'neutral' : 'neutral'"
-                  :variant="selectionMode === 'folder' ? 'solid' : 'ghost'"
-                  icon="i-heroicons-folder"
-                  size="xs"
+                </Button>
+                <Button
+                  :variant="selectionMode === 'folder' ? 'default' : 'ghost'"
+                  size="sm"
                   class="rounded-none"
                   @click="selectionMode = 'folder'"
                 >
+                  <Folder class="h-4 w-4 mr-2" />
                   Folder
-                </UButton>
+                </Button>
               </div>
             </div>
-            <UButton
+            <Button
               variant="ghost"
-              color="neutral"
-              icon="i-heroicons-x-mark"
               size="sm"
               @click="isOpen = false"
-            />
+            >
+              <X class="h-4 w-4" />
+            </Button>
           </div>
 
           <!-- FileBrowser Component -->
@@ -317,7 +314,7 @@ const fileBrowserMode = computed(() => {
             />
           </div>
         </div>
-      </template>
-    </UModal>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

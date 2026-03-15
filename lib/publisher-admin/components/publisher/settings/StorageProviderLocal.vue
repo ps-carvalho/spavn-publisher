@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { LocalStorageConfig } from '~/server/utils/publisher/storage/types'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
 
 // ─── Model ─────────────────────────────────────────────────────────────────────
 
@@ -23,36 +26,30 @@ watch(isValid, (valid) => emit('update:valid', valid), { immediate: true })
 
 <template>
   <div class="space-y-4">
-    <UFormField
-      label="Base Path"
-      required
-      hint="Directory where files are stored"
-      help="The filesystem path where uploaded files will be saved. Can be relative to the project root or an absolute path."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="localBasePath">Base Path <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The filesystem path where uploaded files will be saved. Can be relative to the project root or an absolute path.</p>
+      <Input
+        id="localBasePath"
         v-model="config.basePath"
         placeholder="./public/uploads"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Base URL"
-      required
-      hint="URL path for serving files"
-      help="The public URL path that maps to the base path. Used to generate public URLs for uploaded files."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="localBaseUrl">Base URL <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The public URL path that maps to the base path. Used to generate public URLs for uploaded files.</p>
+      <Input
+        id="localBaseUrl"
         v-model="config.baseUrl"
         placeholder="/uploads"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Create Directories"
-      hint="Automatically create directories"
-      help="When enabled, the storage provider will automatically create the base directory and any subdirectories as needed."
-    >
-      <USwitch v-model:checked="config.createDirectories" />
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Create Directories</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">When enabled, the storage provider will automatically create the base directory and any subdirectories as needed.</p>
+      <Switch v-model:checked="config.createDirectories" />
+    </div>
   </div>
 </template>

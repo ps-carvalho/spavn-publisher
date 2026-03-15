@@ -1,3 +1,5 @@
+import tailwindcss from '@tailwindcss/vite'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   future: { compatibilityVersion: 4 },
@@ -26,10 +28,17 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/scripts',
-    '@nuxt/ui',
+    '@nuxtjs/color-mode',
   ],
 
+  // Force Nuxt to transpile @spavn/ui and its Vue-dependent deps so they
+  // resolve Vue from this project's node_modules (prevents dual-instance SSR crash).
+  build: {
+    transpile: ['@spavn/ui', 'radix-vue'],
+  },
+
   vite: {
+    plugins: [tailwindcss()],
     server: {
       hmr: {
         // When running behind nginx proxy (docker-compose), tell Vite

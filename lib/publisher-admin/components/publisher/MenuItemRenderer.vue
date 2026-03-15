@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { MenuItemType } from '~/lib/publisher/types'
+import { Button } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { ChevronDown, ChevronRight, ExternalLink, EyeOff, File, Link, Menu, PenSquare, Plus, Tag, Trash2 } from 'lucide-vue-next'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -51,21 +54,21 @@ const children = computed(() =>
   props.item.children || [],
 )
 
-const typeIcon = computed(() => {
+const typeIconComponent = computed(() => {
   switch (props.item.type) {
-    case 'page': return 'i-heroicons-document'
-    case 'external': return 'i-heroicons-arrow-top-right-on-square'
-    case 'label': return 'i-heroicons-tag'
-    default: return 'i-heroicons-link'
+    case 'page': return File
+    case 'external': return ExternalLink
+    case 'label': return Tag
+    default: return Link
   }
 })
 
-const typeColor = computed(() => {
+const typeVariant = computed<'default' | 'secondary' | 'outline'>(() => {
   switch (props.item.type) {
-    case 'page': return 'primary'
-    case 'external': return 'success'
-    case 'label': return 'neutral'
-    default: return 'neutral'
+    case 'page': return 'default'
+    case 'external': return 'secondary'
+    case 'label': return 'outline'
+    default: return 'outline'
   }
 })
 
@@ -114,16 +117,16 @@ function handleChildReorder(payload: { itemId: number; parentId: number | null; 
   <div class="menu-item-wrapper">
     <!-- Item Row - this is the draggable element -->
     <div
-      class="menu-item flex items-center gap-2 p-3 hover:bg-stone-50 dark:hover:bg-stone-800/50 rounded-lg transition-colors group"
+      class="menu-item flex items-center gap-2 p-3 hover:bg-[hsl(var(--background))] rounded-lg transition-colors group"
       :class="{ 'has-children': hasChildren }"
       :style="indentStyle"
     >
       <!-- Drag Handle - only on root items for now -->
       <div
         v-if="depth === 0"
-        class="drag-handle cursor-grab active:cursor-grabbing p-1 -ml-1 rounded text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+        class="drag-handle cursor-grab active:cursor-grabbing p-1 -ml-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--background))] transition-colors"
       >
-        <UIcon name="i-heroicons-bars-3" class="w-4 h-4" />
+        <Menu class="w-4 h-4" />
       </div>
       <!-- Spacer for nested items -->
       <div v-else class="w-5" />
@@ -131,79 +134,73 @@ function handleChildReorder(payload: { itemId: number; parentId: number | null; 
       <!-- Expand/Collapse Button -->
       <button
         v-if="hasChildren"
-        class="p-0.5 rounded hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+        class="p-0.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
         @click="toggleExpand"
       >
-        <UIcon
-          :name="isExpanded ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
-          class="w-4 h-4 text-stone-500 dark:text-stone-400"
-        />
+        <ChevronDown v-if="isExpanded" class="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+        <ChevronRight v-else class="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
       </button>
       <div v-else class="w-5" />
 
       <!-- Type Badge -->
-      <UBadge :color="typeColor" size="xs" variant="subtle">
-        <UIcon :name="typeIcon" class="mr-1 w-3 h-3" />
+      <Badge :variant="typeVariant">
+        <component :is="typeIconComponent" class="mr-1 w-3 h-3" />
         {{ item.type }}
-      </UBadge>
+      </Badge>
 
       <!-- Label -->
-      <span class="flex-1 font-medium text-stone-700 dark:text-stone-300 truncate">
+      <span class="flex-1 font-medium text-[hsl(var(--foreground))] truncate">
         {{ item.label }}
       </span>
 
       <!-- URL Preview -->
       <span
         v-if="item.url"
-        class="text-sm text-stone-500 dark:text-stone-400 truncate max-w-xs hidden sm:block"
+        class="text-sm text-[hsl(var(--muted-foreground))] truncate max-w-xs hidden sm:block"
       >
         {{ item.url }}
       </span>
 
       <!-- Visibility Indicator -->
-      <UIcon
+      <EyeOff
         v-if="!item.visible"
-        name="i-heroicons-eye-slash"
-        class="w-4 h-4 text-stone-400 dark:text-stone-500"
+        class="w-4 h-4 text-[hsl(var(--muted-foreground))]"
         title="Hidden"
       />
 
       <!-- Action Buttons -->
       <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <UTooltip text="Edit">
-          <UButton
-            icon="i-heroicons-pencil-square"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            @click="handleEdit"
-          />
-        </UTooltip>
-        <UTooltip text="Add Child">
-          <UButton
-            icon="i-heroicons-plus"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            @click="handleAddChild"
-          />
-        </UTooltip>
-        <UTooltip text="Delete">
-          <UButton
-            icon="i-heroicons-trash"
-            color="error"
-            variant="ghost"
-            size="xs"
-            @click="handleDelete"
-          />
-        </UTooltip>
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Edit"
+          @click="handleEdit"
+        >
+          <PenSquare class="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Add Child"
+          @click="handleAddChild"
+        >
+          <Plus class="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Delete"
+          @click="handleDelete"
+        >
+          <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+        </Button>
       </div>
     </div>
 
     <!-- Children Container - SIBLING of the item row, not nested inside it -->
     <div
       v-if="hasChildren && isExpanded"
-      class="children-container border-l-2 border-stone-200 dark:border-stone-700 ml-6 pl-2"
+      class="children-container border-l-2 border-[hsl(var(--border))] ml-6 pl-2"
     >
       <PublisherMenuItemRenderer
         v-for="child in children"

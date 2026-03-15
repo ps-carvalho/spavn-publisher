@@ -1,11 +1,15 @@
 <script setup lang="ts">
+import { ArrowLeft, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
 })
 
 const route = useRoute()
-const toast = useToast()
+const { toast } = useToast()
 const typeName = computed(() => route.params.type as string)
 const isSaving = ref(false)
 
@@ -73,12 +77,12 @@ async function save(publish = false) {
       })
     }
 
-    toast.add({ title: publish ? 'Published!' : 'Saved as draft', color: 'success' })
+    toast({ title: publish ? 'Published!' : 'Saved as draft' })
     await navigateTo(`/admin/content/${typeName.value}/${result.data.id}`)
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to save'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSaving.value = false
@@ -91,13 +95,12 @@ async function save(publish = false) {
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <UButton
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-left"
-          :to="`/admin/content/${typeName}`"
-        />
-        <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+        <Button variant="ghost" as-child>
+          <NuxtLink :to="`/admin/content/${typeName}`">
+            <ArrowLeft class="h-4 w-4" />
+          </NuxtLink>
+        </Button>
+        <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
           New {{ contentType.displayName }}
         </h2>
       </div>
@@ -106,7 +109,7 @@ async function save(publish = false) {
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <!-- Main form (70%) -->
       <div class="lg:col-span-3">
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
           <form @submit.prevent="save(false)" class="space-y-5">
             <PublisherFieldRenderer
               v-for="[name, config] in mainFields"
@@ -123,28 +126,29 @@ async function save(publish = false) {
       <!-- Sidebar (30%) -->
       <div class="space-y-4">
         <!-- Actions -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
           <div class="space-y-3">
-            <UButton block color="neutral" @click="save(false)" :loading="isSaving">
+            <Button class="w-full" variant="outline" @click="save(false)" :disabled="isSaving">
+              <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
               Save Draft
-            </UButton>
-            <UButton
+            </Button>
+            <Button
               v-if="contentType.options?.draftAndPublish"
-              block
-              color="primary"
-              variant="soft"
+              class="w-full"
+              variant="outline"
               @click="save(true)"
-              :loading="isSaving"
+              :disabled="isSaving"
             >
+              <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
               Save & Publish
-            </UButton>
+            </Button>
           </div>
         </div>
 
         <!-- Boolean fields in sidebar -->
         <div
           v-if="sidebarFields.length > 0"
-          class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6"
+          class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6"
         >
           <div class="space-y-4">
             <PublisherFieldRenderer

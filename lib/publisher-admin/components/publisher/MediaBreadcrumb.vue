@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ChevronRight } from 'lucide-vue-next'
+
 defineProps<{
   items: Array<{ label: string; icon?: string; click?: () => void }>
 }>()
@@ -9,21 +11,18 @@ defineProps<{
     <template v-for="(item, index) in items" :key="index">
       <button
         v-if="item.click"
-        class="flex items-center gap-1 text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors"
-        :class="{ 'text-amber-700 dark:text-amber-400 font-medium': index === items.length - 1 }"
+        class="flex items-center gap-1 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+        :class="{ 'text-[hsl(var(--primary))] font-medium': index === items.length - 1 }"
         @click="item.click"
       >
-        <UIcon v-if="item.icon" :name="item.icon" class="w-4 h-4" />
         <span>{{ item.label }}</span>
       </button>
-      <span v-else class="flex items-center gap-1 text-amber-700 dark:text-amber-400 font-medium">
-        <UIcon v-if="item.icon" :name="item.icon" class="w-4 h-4" />
+      <span v-else class="flex items-center gap-1 text-[hsl(var(--primary))] font-medium">
         <span>{{ item.label }}</span>
       </span>
-      <UIcon
+      <ChevronRight
         v-if="index < items.length - 1"
-        name="i-heroicons-chevron-right"
-        class="w-4 h-4 text-stone-300 dark:text-stone-600"
+        class="w-4 h-4 text-[hsl(var(--muted-foreground))]"
       />
     </template>
   </div>

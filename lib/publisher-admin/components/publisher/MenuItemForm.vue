@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { MenuItemType } from '~/lib/publisher/types'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { Info } from 'lucide-vue-next'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,7 +65,7 @@ const form = reactive({
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-const toast = useToast()
+const { toast } = useToast()
 
 // ─── Options ──────────────────────────────────────────────────────────────────
 
@@ -84,7 +91,7 @@ const pages = computed(() => props.pages || pagesData.value?.data || [])
 
 const pageOptions = computed(() =>
   pages.value.map(page => ({
-    value: page.id,
+    value: String(page.id),
     label: `${page.title} (${page.slug})`,
   })),
 )
@@ -176,10 +183,10 @@ function validateForm(): boolean {
 
 async function handleSubmit() {
   if (!validateForm()) {
-    toast.add({
+    toast({
       title: 'Validation failed',
       description: 'Please fix the errors in the form',
-      color: 'error',
+      variant: 'destructive',
     })
     return
   }
@@ -215,17 +222,16 @@ async function handleSubmit() {
     await props.onSubmit(payload)
     emit('submitted', payload)
 
-    toast.add({
+    toast({
       title: props.item ? 'Menu item updated' : 'Menu item created',
-      color: 'success',
     })
   }
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to save menu item'
-    toast.add({
+    toast({
       title: 'Error',
       description: message,
-      color: 'error',
+      variant: 'destructive',
     })
   }
   finally {
@@ -244,130 +250,128 @@ function handleCancel() {
 <template>
   <form class="space-y-4" @submit.prevent="handleSubmit">
     <!-- Type Selection -->
-    <UFormField label="Type" required :error="formErrors.type">
-      <USelect
-        v-model="form.type"
-        :items="typeOptions"
-        value-key="value"
-        placeholder="Select type"
-        class="w-full"
-      />
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Type <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <Select v-model="form.type">
+        <SelectTrigger class="w-full"><SelectValue placeholder="Select type" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in typeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+        </SelectContent>
+      </Select>
+      <p v-if="formErrors.type" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.type }}</p>
+    </div>
 
     <!-- Label (common to all types) -->
-    <UFormField label="Label" required :error="formErrors.label">
-      <UInput
+    <div class="space-y-2">
+      <Label for="menuLabel">Label <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <Input
+        id="menuLabel"
         v-model="form.label"
         placeholder="e.g., About Us"
         class="w-full"
       />
-      <template #hint>
-        <span class="text-xs text-stone-400">The text displayed for this menu item</span>
-      </template>
-    </UFormField>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The text displayed for this menu item</p>
+      <p v-if="formErrors.label" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.label }}</p>
+    </div>
 
     <!-- Dynamic Fields Based on Type -->
     <template v-if="form.type === 'page'">
-      <UFormField label="Page" required :error="formErrors.pageId">
-        <USelectMenu
-          v-model="form.pageId"
-          :items="pageOptions"
-          value-key="value"
-          placeholder="Select a page"
-          searchable
-          class="w-full"
-        />
-        <template #hint>
-          <span class="text-xs text-stone-400">Select the CMS page to link to</span>
-        </template>
-      </UFormField>
+      <div class="space-y-2">
+        <Label>Page <span class="text-[hsl(var(--destructive))]">*</span></Label>
+        <Select v-model="form.pageId">
+          <SelectTrigger class="w-full"><SelectValue placeholder="Select a page" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="opt in pageOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+          </SelectContent>
+        </Select>
+        <p class="text-xs text-[hsl(var(--muted-foreground))]">Select the CMS page to link to</p>
+        <p v-if="formErrors.pageId" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.pageId }}</p>
+      </div>
     </template>
 
     <template v-if="form.type === 'external'">
-      <UFormField label="URL" required :error="formErrors.url">
-        <UInput
+      <div class="space-y-2">
+        <Label for="menuUrl">URL <span class="text-[hsl(var(--destructive))]">*</span></Label>
+        <Input
+          id="menuUrl"
           v-model="form.url"
           placeholder="https://example.com"
           class="w-full"
         />
-        <template #hint>
-          <span class="text-xs text-stone-400">Full URL including https://</span>
-        </template>
-      </UFormField>
+        <p class="text-xs text-[hsl(var(--muted-foreground))]">Full URL including https://</p>
+        <p v-if="formErrors.url" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.url }}</p>
+      </div>
     </template>
 
     <template v-if="form.type === 'label'">
-      <div class="p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700">
-        <p class="text-sm text-stone-500 dark:text-stone-400">
-          <UIcon name="i-heroicons-information-circle" class="mr-1" />
+      <div class="p-3 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))]">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+          <Info class="inline-block h-4 w-4 mr-1" />
           Label items don't link anywhere. They're useful for grouping items under a heading.
         </p>
       </div>
     </template>
 
     <!-- Common Fields -->
-    <UFormField label="Open in" :error="formErrors.target">
-      <USelect
-        v-model="form.target"
-        :items="targetOptions"
-        value-key="value"
-        placeholder="Select target"
+    <div class="space-y-2">
+      <Label>Open in</Label>
+      <Select v-model="form.target">
+        <SelectTrigger class="w-full"><SelectValue placeholder="Select target" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in targetOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+        </SelectContent>
+      </Select>
+      <p v-if="formErrors.target" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.target }}</p>
+    </div>
+
+    <div class="space-y-2">
+      <Label for="menuIcon">Icon</Label>
+      <Input
+        id="menuIcon"
+        v-model="form.icon"
+        placeholder="e.g., Home"
         class="w-full"
       />
-    </UFormField>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Lucide icon name (e.g., Home, Settings, File)</p>
+      <p v-if="formErrors.icon" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.icon }}</p>
+    </div>
 
-    <UFormField label="Icon" :error="formErrors.icon">
-      <UInput
-        v-model="form.icon"
-        placeholder="e.g., i-heroicons-home"
-        class="w-full"
-      >
-        <template v-if="form.icon" #leading>
-          <UIcon :name="form.icon" class="text-stone-500" />
-        </template>
-      </UInput>
-      <template #hint>
-        <span class="text-xs text-stone-400">Iconify icon class (e.g., i-heroicons-home)</span>
-      </template>
-    </UFormField>
-
-    <UFormField label="CSS Class" :error="formErrors.cssClass">
-      <UInput
+    <div class="space-y-2">
+      <Label for="menuCssClass">CSS Class</Label>
+      <Input
+        id="menuCssClass"
         v-model="form.cssClass"
         placeholder="e.g., nav-highlight featured"
         class="w-full"
       />
-      <template #hint>
-        <span class="text-xs text-stone-400">Additional CSS classes for styling</span>
-      </template>
-    </UFormField>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Additional CSS classes for styling</p>
+      <p v-if="formErrors.cssClass" class="text-sm text-[hsl(var(--destructive))]">{{ formErrors.cssClass }}</p>
+    </div>
 
-    <UFormField label="Visible">
-      <USwitch v-model:checked="form.visible" />
-      <template #hint>
-        <span class="text-xs text-stone-400">Hidden items won't appear in the menu</span>
-      </template>
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Visible</Label>
+      <div class="flex items-center gap-2">
+        <Switch v-model:checked="form.visible" />
+        <span class="text-xs text-[hsl(var(--muted-foreground))]">Hidden items won't appear in the menu</span>
+      </div>
+    </div>
 
     <!-- Actions -->
-    <div class="flex justify-end gap-2 pt-4 border-t border-stone-200 dark:border-stone-800">
-      <UButton
+    <div class="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
+      <Button
         v-if="onCancel || $attrs.onCancel"
         variant="ghost"
-        color="neutral"
         type="button"
         @click="handleCancel"
       >
         Cancel
-      </UButton>
-      <UButton
+      </Button>
+      <Button
         type="submit"
-        color="neutral"
-        :loading="isSubmitting"
-        :disabled="!form.label"
+        :disabled="!form.label || isSubmitting"
       >
         {{ item ? 'Update Item' : 'Create Item' }}
-      </UButton>
+      </Button>
     </div>
   </form>
 </template>

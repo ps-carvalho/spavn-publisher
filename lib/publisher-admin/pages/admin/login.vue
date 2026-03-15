@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Box, MailOpen, Send, AlertTriangle, CheckCircle, Loader2 } from 'lucide-vue-next'
+import { Button, Input, Label, Alert, AlertTitle, AlertDescription, Card, CardContent } from '@spavn/ui'
+
 definePageMeta({
   layout: false,
 })
@@ -60,10 +63,10 @@ async function handleSubmit() {
     await requestMagicLink(email.value)
     showMagicLinkSent.value = true
     successMessage.value = 'Check your email for a sign-in link'
-  } 
+  }
   catch (e: any) {
     errorMessage.value = e?.data?.error?.message || 'Failed to send sign-in link. Please try again.'
-  } 
+  }
   finally {
     isIdentifying.value = false
   }
@@ -82,106 +85,101 @@ async function handleResend() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-stone-100 via-stone-50 to-amber-50/30 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--background))] to-[hsl(var(--accent))] flex items-center justify-center p-4">
     <div class="w-full max-w-md">
       <!-- Logo & Heading -->
       <div class="text-center mb-8">
-        <UIcon name="i-heroicons-cube-transparent" class="text-amber-600 dark:text-amber-500 text-4xl mb-3" />
-        <h1 class="text-3xl font-bold text-stone-900 dark:text-stone-100">Publisher</h1>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">Sign in to your account</p>
+        <Box class="w-9 h-9 text-[hsl(var(--primary))] mx-auto mb-3" />
+        <h1 class="text-3xl font-bold text-[hsl(var(--foreground))]">Publisher</h1>
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">Sign in to your account</p>
       </div>
 
       <!-- Login Card -->
-      <UCard>
-        <!-- Step 1: Email Entry -->
-        <form v-if="!showMagicLinkSent" @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Error alert -->
-          <UAlert
-            v-if="errorMessage"
-            color="error"
-            variant="subtle"
-            icon="i-heroicons-exclamation-triangle"
-            :title="errorMessage"
-            :close-button="{ onClick: () => errorMessage = '' }"
-          />
+      <Card>
+        <CardContent class="pt-6">
+          <!-- Step 1: Email Entry -->
+          <form v-if="!showMagicLinkSent" @submit.prevent="handleSubmit" class="space-y-4">
+            <!-- Error alert -->
+            <Alert v-if="errorMessage" variant="destructive">
+              <AlertTriangle class="h-4 w-4" />
+              <AlertTitle>{{ errorMessage }}</AlertTitle>
+            </Alert>
 
-          <!-- Email -->
-          <UFormField label="Email" name="email">
-            <UInput
-              v-model="email"
-              type="email"
-              placeholder="you@example.com"
-              icon="i-heroicons-envelope"
-              autofocus
-              size="lg"
-              class="w-full"
-            />
-          </UFormField>
+            <!-- Email -->
+            <div class="space-y-2">
+              <Label for="login-email">Email</Label>
+              <Input
+                id="login-email"
+                v-model="email"
+                type="email"
+                placeholder="you@example.com"
+                autofocus
+                class="w-full"
+              />
+            </div>
 
-          <p class="text-sm text-stone-500 dark:text-stone-400">
-            We'll send you a secure sign-in link. No password needed.
-          </p>
-
-          <!-- Submit -->
-          <UButton
-            type="submit"
-            block
-            size="lg"
-            :loading="isIdentifying"
-            :disabled="!isEmailValid"
-            icon="i-heroicons-paper-airplane"
-          >
-            Send Magic Link
-          </UButton>
-        </form>
-
-        <!-- Step 2: Magic Link Sent -->
-        <div v-else class="text-center space-y-4">
-          <!-- Success alert -->
-          <UAlert
-            v-if="successMessage"
-            color="success"
-            variant="subtle"
-            icon="i-heroicons-check-circle"
-            :title="successMessage"
-          />
-
-          <div class="py-4">
-            <UIcon name="i-heroicons-envelope-open" class="text-6xl text-amber-600 dark:text-amber-500 mb-4" />
-            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-              Check your email
-            </h3>
-            <p class="text-stone-600 dark:text-stone-300">
-              We've sent a secure sign-in link to
-              <strong class="block mt-1">{{ email }}</strong>
+            <p class="text-sm text-[hsl(var(--muted-foreground))]">
+              We'll send you a secure sign-in link. No password needed.
             </p>
-          </div>
 
-          <div class="space-y-3">
-            <p class="text-sm text-stone-500">
-              Didn't receive it?
+            <!-- Submit -->
+            <Button
+              type="submit"
+              class="w-full"
+              size="lg"
+              :disabled="!isEmailValid || isIdentifying"
+            >
+              <Loader2 v-if="isIdentifying" class="h-5 w-5 mr-2 animate-spin" />
+              <Send v-else class="h-5 w-5 mr-2" />
+              Send Magic Link
+            </Button>
+          </form>
+
+          <!-- Step 2: Magic Link Sent -->
+          <div v-else class="text-center space-y-4">
+            <!-- Success alert -->
+            <Alert v-if="successMessage">
+              <CheckCircle class="h-4 w-4" />
+              <AlertTitle>{{ successMessage }}</AlertTitle>
+            </Alert>
+
+            <div class="py-4">
+              <MailOpen class="w-16 h-16 text-[hsl(var(--primary))] mx-auto mb-4" />
+              <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-2">
+                Check your email
+              </h3>
+              <p class="text-[hsl(var(--muted-foreground))]">
+                We've sent a secure sign-in link to
+                <strong class="block mt-1">{{ email }}</strong>
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                Didn't receive it?
+                <button
+                  type="button"
+                  class="text-[hsl(var(--primary))] hover:underline font-medium ml-1"
+                  @click="handleResend"
+                >
+                  Send again
+                </button>
+              </p>
+
               <button
                 type="button"
-                class="text-amber-600 dark:text-amber-500 hover:underline font-medium ml-1"
-                @click="handleResend"
+                class="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                @click="showMagicLinkSent = false; errorMessage = ''; successMessage = ''"
               >
-                Send again
+                Use a different email
               </button>
-            </p>
-
-            <button
-              type="button"
-              class="text-sm text-stone-400 hover:text-stone-600"
-              @click="showMagicLinkSent = false; errorMessage = ''; successMessage = ''"
-            >
-              Use a different email
-            </button>
+            </div>
           </div>
-        </div>
-      </UCard>
+        </CardContent>
+      </Card>
 
       <!-- Footer -->
-      <p class="text-center text-xs text-stone-400 dark:text-stone-500 mt-6">
+      <p class="text-center text-xs text-[hsl(var(--muted-foreground))] mt-6">
         Publisher CMS v0.1.0
       </p>
     </div>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { Button } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Loader2 } from 'lucide-vue-next'
+
 defineProps<{
   open: boolean
   selectedCount: number
@@ -12,33 +16,38 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UModal :open="open" @update:open="emit('update:open', $event)">
-    <template #content>
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-          Delete {{ selectedCount }} File{{ selectedCount !== 1 ? 's' : '' }}?
-        </h3>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
-          This action cannot be undone. The selected files will be permanently removed.
-        </p>
-        <div class="flex justify-end gap-3">
-          <UButton
-            variant="ghost"
-            color="neutral"
-            :disabled="isBulkOperating"
-            @click="emit('update:open', false)"
-          >
-            Cancel
-          </UButton>
-          <UButton
-            color="error"
-            :loading="isBulkOperating"
-            @click="emit('confirm')"
-          >
-            Delete {{ selectedCount }} File{{ selectedCount !== 1 ? 's' : '' }}
-          </UButton>
-        </div>
-      </div>
-    </template>
-  </UModal>
+  <Dialog :open="open" @update:open="emit('update:open', $event)">
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Delete {{ selectedCount }} File{{ selectedCount !== 1 ? 's' : '' }}?</DialogTitle>
+      </DialogHeader>
+      <p class="text-sm text-[hsl(var(--muted-foreground))]">
+        This action cannot be undone. The selected files will be permanently removed.
+      </p>
+      <DialogFooter>
+        <Button
+          variant="ghost"
+          :disabled="isBulkOperating"
+          @click="emit('update:open', false)"
+        >
+          Cancel
+        </Button>
+        <Button
+          v-if="!isBulkOperating"
+          variant="destructive"
+          @click="emit('confirm')"
+        >
+          Delete {{ selectedCount }} File{{ selectedCount !== 1 ? 's' : '' }}
+        </Button>
+        <Button
+          v-else
+          variant="destructive"
+          disabled
+        >
+          <Loader2 class="h-4 w-4 animate-spin mr-2" />
+          Deleting...
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

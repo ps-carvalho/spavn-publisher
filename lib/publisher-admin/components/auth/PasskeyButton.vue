@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Fingerprint, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+
 interface PublisherUser {
   id: number
   email: string
@@ -42,17 +45,16 @@ async function handleClick() {
 
 <template>
   <div v-if="isSupported">
-    <UButton
-      block
+    <Button
+      class="w-full"
       size="lg"
-      color="neutral"
       variant="outline"
-      icon="i-heroicons-finger-print"
-      :loading="isLoading"
-      :disabled="!emailValid"
+      :disabled="!emailValid || isLoading"
       @click="handleClick"
     >
+      <Loader2 v-if="isLoading" class="h-5 w-5 mr-2 animate-spin" />
+      <Fingerprint v-else class="h-5 w-5 mr-2" />
       Sign in with Passkey
-    </UButton>
+    </Button>
   </div>
 </template>

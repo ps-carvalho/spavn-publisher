@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import type { FieldConfig } from '~~/lib/publisher/types'
+import { Plus, Pencil, Trash2, Box, Search, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@spavn/ui'
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
@@ -19,7 +27,7 @@ interface ContentTypeSummary {
   active?: boolean
 }
 
-const toast = useToast()
+const { toast } = useToast()
 
 // Fetch content types
 const { data: contentTypesData, refresh: refreshContentTypes, status: contentTypesStatus } = await useFetch<{ data: ContentTypeSummary[] }>('/api/publisher/types')
@@ -52,7 +60,7 @@ const filteredContentTypes = computed(() => {
   let data = contentTypes.value
   if (debouncedSearch.value) {
     const query = debouncedSearch.value.toLowerCase()
-    data = data.filter(t => 
+    data = data.filter(t =>
       t.displayName.toLowerCase().includes(query) ||
       t.name.toLowerCase().includes(query) ||
       (t.description && t.description.toLowerCase().includes(query))
@@ -67,7 +75,7 @@ const paginatedContentTypes = computed(() => {
   return filteredContentTypes.value.slice(start, start + pageSize)
 })
 
-const totalPages = computed(() => 
+const totalPages = computed(() =>
   Math.ceil(filteredContentTypes.value.length / pageSize)
 )
 
@@ -88,11 +96,11 @@ async function confirmDelete() {
   try {
     await $fetch(`/api/publisher/types/${deleteTarget.value.name}`, { method: 'DELETE' })
     await refreshContentTypes()
-    toast.add({ title: `${deleteTarget.value.displayName} deleted`, color: 'success' })
+    toast({ title: `${deleteTarget.value.displayName} deleted` })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to delete'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isDeleting.value = false
@@ -101,26 +109,8 @@ async function confirmDelete() {
   }
 }
 
-// Content type columns
-const contentTypeColumns = [
-  { accessorKey: 'icon', header: '' },
-  { accessorKey: 'displayName', header: 'Display Name' },
-  { accessorKey: 'name', header: 'API Name' },
-  { accessorKey: 'fieldCount', header: 'Fields' },
-  { accessorKey: 'status', header: 'Status' },
-  { id: 'actions', header: '' },
-]
-
 function getFieldCount(fields: Record<string, any> | undefined): number {
   return fields ? Object.keys(fields).length : 0
-}
-
-function getContentTypeRows() {
-  return paginatedContentTypes.value.map(t => ({
-    ...t,
-    icon: t.icon || 'i-heroicons-cube',
-    fieldCount: getFieldCount(t.fields),
-  }))
 }
 </script>
 
@@ -128,150 +118,162 @@ function getContentTypeRows() {
   <div>
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Content Types</h2>
-      <UButton
-        icon="i-heroicons-plus"
-        color="neutral"
-        to="/admin/types/content/new"
-      >
-        Create Content Type
-      </UButton>
+      <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">Content Types</h2>
+      <Button as-child variant="outline">
+        <NuxtLink to="/admin/types/content/new">
+          <Plus class="h-4 w-4 mr-2" />
+          Create Content Type
+        </NuxtLink>
+      </Button>
     </div>
 
-    <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
+    <p class="text-sm text-[hsl(var(--muted-foreground))] mb-4">
       Define content structures for your API
     </p>
 
     <!-- Filter bar -->
     <div class="flex items-center gap-4 mb-4">
-      <UInput
-        v-model="search"
-        placeholder="Search content types..."
-        icon="i-heroicons-magnifying-glass"
-        class="w-64"
-      />
-    </div>
-
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable
-        :data="getContentTypeRows()"
-        :columns="contentTypeColumns"
-        :loading="contentTypesStatus === 'pending'"
-      >
-        <template #icon-cell="{ row }">
-          <UIcon :name="row.original.icon" class="text-lg text-stone-500 dark:text-stone-400" />
-        </template>
-
-        <template #displayName-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <NuxtLink
-              :to="`/admin/types/content/${row.original.name}`"
-              class="font-medium text-stone-900 dark:text-stone-100 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              {{ row.original.displayName }}
-            </NuxtLink>
-            <UBadge v-if="row.original.isSystem" color="info" variant="subtle" size="xs">
-              System
-            </UBadge>
-          </div>
-        </template>
-
-        <template #name-cell="{ row }">
-          <code class="text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
-            {{ row.original.name }}
-          </code>
-        </template>
-
-        <template #fieldCount-cell="{ row }">
-          <span class="text-sm text-stone-600 dark:text-stone-400">
-            {{ row.original.fieldCount }} fields
-          </span>
-        </template>
-
-        <template #status-cell="{ row }">
-          <UBadge
-            v-if="row.original.active === false"
-            color="error"
-            variant="subtle"
-            size="xs"
-          >
-            Disabled
-          </UBadge>
-          <UBadge v-else color="success" variant="subtle" size="xs">
-            Active
-          </UBadge>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-pencil"
-              :to="`/admin/types/content/${row.original.name}`"
-            />
-            <UButton
-              v-if="!row.original.isSystem"
-              size="xs"
-              variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
-              @click="openDeleteModal(row.original.name, row.original.displayName)"
-            />
-          </div>
-        </template>
-      </UTable>
-
-      <div v-if="filteredContentTypes.length === 0 && contentTypesStatus !== 'pending'" class="text-center py-12">
-        <UIcon name="i-heroicons-cube" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400">No content types found.</p>
-        <UButton
-          v-if="!search"
-          variant="soft"
-          color="neutral"
-          icon="i-heroicons-plus"
-          to="/admin/types/content/new"
-          class="mt-4"
-        >
-          Create your first content type
-        </UButton>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-stone-200 dark:border-stone-800">
-        <p class="text-sm text-stone-500 dark:text-stone-400">
-          Showing {{ ((page - 1) * pageSize) + 1 }}–{{ Math.min(page * pageSize, filteredContentTypes.length) }} of {{ filteredContentTypes.length }}
-        </p>
-        <UPagination
-          v-model:page="page"
-          :total="filteredContentTypes.length"
-          :items-per-page="pageSize"
+      <div class="relative w-64">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+        <Input
+          v-model="search"
+          placeholder="Search content types..."
+          class="pl-9"
         />
       </div>
     </div>
 
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="w-[40px]"></TableHead>
+            <TableHead>Display Name</TableHead>
+            <TableHead>API Name</TableHead>
+            <TableHead>Fields</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead class="w-[100px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="contentTypesStatus === 'pending'">
+            <TableCell colspan="6" class="text-center py-8 text-[hsl(var(--muted-foreground))]">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-for="t in paginatedContentTypes" :key="t.name">
+            <TableCell>
+              <Box class="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2">
+                <NuxtLink
+                  :to="`/admin/types/content/${t.name}`"
+                  class="font-medium text-[hsl(var(--foreground))] hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  {{ t.displayName }}
+                </NuxtLink>
+                <Badge v-if="t.isSystem" variant="secondary" class="text-xs">
+                  System
+                </Badge>
+              </div>
+            </TableCell>
+            <TableCell>
+              <code class="text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
+                {{ t.name }}
+              </code>
+            </TableCell>
+            <TableCell class="text-sm text-[hsl(var(--muted-foreground))]">
+              {{ getFieldCount(t.fields) }} fields
+            </TableCell>
+            <TableCell>
+              <Badge
+                v-if="t.active === false"
+                variant="destructive"
+                class="text-xs"
+              >
+                Disabled
+              </Badge>
+              <Badge v-else variant="default" class="text-xs">
+                Active
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-1">
+                <Button size="sm" variant="ghost" as-child>
+                  <NuxtLink :to="`/admin/types/content/${t.name}`">
+                    <Pencil class="h-4 w-4" />
+                  </NuxtLink>
+                </Button>
+                <Button
+                  v-if="!t.isSystem"
+                  size="sm"
+                  variant="ghost"
+                  @click="openDeleteModal(t.name, t.displayName)"
+                >
+                  <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+
+      <div v-if="filteredContentTypes.length === 0 && contentTypesStatus !== 'pending'" class="text-center py-12">
+        <Box class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">No content types found.</p>
+        <Button
+          v-if="!search"
+          variant="outline"
+          as-child
+          class="mt-4"
+        >
+          <NuxtLink to="/admin/types/content/new">
+            <Plus class="h-4 w-4 mr-2" />
+            Create your first content type
+          </NuxtLink>
+        </Button>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-[hsl(var(--border))]">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+          Showing {{ ((page - 1) * pageSize) + 1 }}–{{ Math.min(page * pageSize, filteredContentTypes.length) }} of {{ filteredContentTypes.length }}
+        </p>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious :disabled="page <= 1" @click="page = Math.max(1, page - 1)" />
+            </PaginationItem>
+            <PaginationItem>
+              <span class="text-sm text-[hsl(var(--muted-foreground))] px-3">Page {{ page }} of {{ totalPages }}</span>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext :disabled="page >= totalPages" @click="page = Math.min(totalPages, page + 1)" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
+
     <!-- Delete confirmation modal -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-            Delete Content Type
-          </h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete <span class="font-medium text-stone-700 dark:text-stone-300">{{ deleteTarget?.displayName }}</span>?
-            This will disable the type but preserve existing data.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">
-              Cancel
-            </UButton>
-            <UButton color="error" :loading="isDeleting" @click="confirmDelete">
-              Delete
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Content Type</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete <span class="font-medium text-[hsl(var(--foreground))]">{{ deleteTarget?.displayName }}</span>?
+          This will disable the type but preserve existing data.
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">
+            Cancel
+          </Button>
+          <Button variant="destructive" :disabled="isDeleting" @click="confirmDelete">
+            <Loader2 v-if="isDeleting" class="h-4 w-4 mr-2 animate-spin" />
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

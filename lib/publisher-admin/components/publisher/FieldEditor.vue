@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import type { FieldConfig, FieldType, RelationType } from '~~/lib/publisher/types'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { Check, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: Record<string, FieldConfig>
@@ -10,7 +18,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: Record<string, FieldConfig>]
 }>()
 
-const toast = useToast()
+const { toast } = useToast()
 const showFieldModal = ref(false)
 const editingFieldName = ref<string | null>(null)
 const isSubmitting = ref(false)
@@ -87,26 +95,26 @@ const availableFieldsForTarget = computed(() => {
     .map(([name]) => name)
 })
 
-type BadgeColor = 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral'
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline'
 
-function getTypeColor(type: FieldType): BadgeColor {
-  const colors: Record<string, BadgeColor> = {
-    string: 'info',
-    text: 'info',
-    richtext: 'info',
-    number: 'success',
-    boolean: 'warning',
-    date: 'info',
-    datetime: 'info',
-    uid: 'warning',
-    media: 'warning',
-    relation: 'info',
-    enum: 'warning',
-    json: 'neutral',
-    email: 'info',
-    password: 'error',
+function getTypeVariant(type: FieldType): BadgeVariant {
+  const variants: Record<string, BadgeVariant> = {
+    string: 'secondary',
+    text: 'secondary',
+    richtext: 'secondary',
+    number: 'default',
+    boolean: 'outline',
+    date: 'secondary',
+    datetime: 'secondary',
+    uid: 'outline',
+    media: 'outline',
+    relation: 'secondary',
+    enum: 'outline',
+    json: 'outline',
+    email: 'secondary',
+    password: 'destructive',
   }
-  return colors[type] || 'neutral'
+  return variants[type] || 'outline'
 }
 
 function resetForm() {
@@ -195,7 +203,7 @@ function saveField() {
 
   // If there are any validation errors, show a summary toast and return
   if (Object.keys(validationErrors.value).length > 0) {
-    toast.add({ title: 'Please fix the validation errors', color: 'error' })
+    toast({ title: 'Please fix the validation errors', variant: 'destructive' })
     return
   }
 
@@ -255,7 +263,7 @@ function saveField() {
   emit('update:modelValue', updated)
 
   showFieldModal.value = false
-  toast.add({ title: editingFieldName.value ? 'Field updated' : 'Field added', color: 'success' })
+  toast({ title: editingFieldName.value ? 'Field updated' : 'Field added' })
 }
 
 function deleteField(fieldName: string) {
@@ -264,7 +272,7 @@ function deleteField(fieldName: string) {
   const updated = { ...props.modelValue }
   delete updated[fieldName]
   emit('update:modelValue', updated)
-  toast.add({ title: 'Field deleted', color: 'success' })
+  toast({ title: 'Field deleted' })
 }
 
 const showTypeOptions = computed(() => {
@@ -283,50 +291,49 @@ const showTypeOptions = computed(() => {
 <template>
   <div class="space-y-4">
     <!-- Field list -->
-    <div v-if="fields.length > 0" class="border border-stone-200 dark:border-stone-700 rounded-lg overflow-hidden">
+    <div v-if="fields.length > 0" class="border border-[hsl(var(--border))] rounded-lg overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-stone-50 dark:bg-stone-800/50">
+        <thead class="bg-[hsl(var(--background))]">
           <tr>
-            <th class="text-left px-4 py-2 font-medium text-stone-700 dark:text-stone-300">Name</th>
-            <th class="text-left px-4 py-2 font-medium text-stone-700 dark:text-stone-300">Type</th>
-            <th class="text-center px-4 py-2 font-medium text-stone-700 dark:text-stone-300">Required</th>
-            <th class="text-right px-4 py-2 font-medium text-stone-700 dark:text-stone-300">Actions</th>
+            <th class="text-left px-4 py-2 font-medium text-[hsl(var(--muted-foreground))]">Name</th>
+            <th class="text-left px-4 py-2 font-medium text-[hsl(var(--muted-foreground))]">Type</th>
+            <th class="text-center px-4 py-2 font-medium text-[hsl(var(--muted-foreground))]">Required</th>
+            <th class="text-right px-4 py-2 font-medium text-[hsl(var(--muted-foreground))]">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-stone-200 dark:divide-stone-700">
-          <tr v-for="[name, config] in fields" :key="name" class="hover:bg-stone-50 dark:hover:bg-stone-800/30">
+        <tbody class="divide-y divide-[hsl(var(--border))]">
+          <tr v-for="[name, config] in fields" :key="name" class="hover:bg-[hsl(var(--background))]">
             <td class="px-4 py-2">
-              <div class="font-medium text-stone-900 dark:text-stone-100">{{ name }}</div>
-              <div v-if="config.label" class="text-xs text-stone-500 dark:text-stone-400">{{ config.label }}</div>
+              <div class="font-medium text-[hsl(var(--foreground))]">{{ name }}</div>
+              <div v-if="config.label" class="text-xs text-[hsl(var(--muted-foreground))]">{{ config.label }}</div>
             </td>
             <td class="px-4 py-2">
-              <UBadge :color="getTypeColor(config.type)" variant="subtle" size="xs">
+              <Badge :variant="getTypeVariant(config.type)">
                 {{ config.type }}
-              </UBadge>
+              </Badge>
             </td>
             <td class="px-4 py-2 text-center">
-              <UIcon
+              <Check
                 v-if="config.required"
-                name="i-heroicons-check"
-                class="text-green-600 dark:text-green-400"
+                class="inline-block h-4 w-4 text-green-600 dark:text-green-400"
               />
-              <span v-else class="text-stone-300 dark:text-stone-600">—</span>
+              <span v-else class="text-[hsl(var(--muted-foreground))]">&mdash;</span>
             </td>
             <td class="px-4 py-2 text-right">
-              <UButton
-                size="xs"
+              <Button
+                size="sm"
                 variant="ghost"
-                color="neutral"
-                icon="i-heroicons-pencil"
                 @click="openEditModal(name, config)"
-              />
-              <UButton
-                size="xs"
+              >
+                <Pencil class="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
                 variant="ghost"
-                color="error"
-                icon="i-heroicons-trash"
                 @click="deleteField(name)"
-              />
+              >
+                <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+              </Button>
             </td>
           </tr>
         </tbody>
@@ -334,199 +341,220 @@ const showTypeOptions = computed(() => {
     </div>
 
     <!-- Empty state -->
-    <div v-else class="text-center py-8 border border-dashed border-stone-300 dark:border-stone-700 rounded-lg">
-      <UIcon name="i-heroicons-squares-2x2" class="text-3xl text-stone-400 dark:text-stone-500 mb-2" />
-      <p class="text-stone-500 dark:text-stone-400 text-sm">No fields defined yet</p>
+    <div v-else class="text-center py-8 border border-dashed border-[hsl(var(--border))] rounded-lg">
+      <LayoutGrid class="mx-auto h-8 w-8 text-[hsl(var(--muted-foreground))] mb-2" />
+      <p class="text-[hsl(var(--muted-foreground))] text-sm">No fields defined yet</p>
     </div>
 
     <!-- Add field button -->
-    <UButton
+    <Button
       variant="outline"
-      color="neutral"
-      icon="i-heroicons-plus"
       @click="openAddModal"
     >
+      <Plus class="h-4 w-4 mr-2" />
       Add Field
-    </UButton>
+    </Button>
 
     <!-- Field modal -->
-    <UModal v-model:open="showFieldModal">
-      <template #content>
-        <div class="p-6 max-h-[85vh] overflow-y-auto">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
-            {{ editingFieldName ? 'Edit Field' : 'Add Field' }}
-          </h3>
+    <Dialog v-model:open="showFieldModal">
+      <DialogContent class="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{{ editingFieldName ? 'Edit Field' : 'Add Field' }}</DialogTitle>
+        </DialogHeader>
 
-          <form @submit.prevent="saveField" class="space-y-4">
-            <!-- Field name -->
-            <UFormField label="Field Name" required :error="validationErrors.name">
-              <UInput
-                v-model="fieldForm.name"
-                placeholder="e.g., title, body, price"
-                :disabled="!!editingFieldName"
+        <form @submit.prevent="saveField" class="space-y-4">
+          <!-- Field name -->
+          <div class="space-y-2">
+            <Label for="fieldName">Field Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              id="fieldName"
+              v-model="fieldForm.name"
+              placeholder="e.g., title, body, price"
+              :disabled="!!editingFieldName"
+            />
+            <p v-if="validationErrors.name" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.name }}</p>
+          </div>
+
+          <!-- Field type -->
+          <div class="space-y-2">
+            <Label>Type <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Select v-model="fieldForm.type">
+              <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="ft in fieldTypes" :key="ft.value" :value="ft.value">{{ ft.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p v-if="validationErrors.type" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.type }}</p>
+          </div>
+
+          <!-- Label & Hint -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label for="fieldLabel">Label</Label>
+              <Input id="fieldLabel" v-model="fieldForm.label" placeholder="Display name" />
+            </div>
+            <div class="space-y-2">
+              <Label for="fieldHint">Hint</Label>
+              <Input id="fieldHint" v-model="fieldForm.hint" placeholder="Help text" />
+            </div>
+          </div>
+
+          <!-- Required & Unique -->
+          <div class="flex gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                v-model="fieldForm.required"
+                class="rounded border-[hsl(var(--border))]"
               />
-            </UFormField>
-
-            <!-- Field type -->
-            <UFormField label="Type" required :error="validationErrors.type">
-              <USelect
-                v-model="fieldForm.type"
-                :items="fieldTypes"
-                value-key="value"
-                label-key="label"
+              <span class="text-sm text-[hsl(var(--foreground))]">Required</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                v-model="fieldForm.unique"
+                class="rounded border-[hsl(var(--border))]"
               />
-            </UFormField>
+              <span class="text-sm text-[hsl(var(--foreground))]">Unique</span>
+            </label>
+          </div>
 
-            <!-- Label & Hint -->
+          <!-- String/Text options -->
+          <template v-if="showTypeOptions.string">
             <div class="grid grid-cols-2 gap-4">
-              <UFormField label="Label">
-                <UInput v-model="fieldForm.label" placeholder="Display name" />
-              </UFormField>
-              <UFormField label="Hint">
-                <UInput v-model="fieldForm.hint" placeholder="Help text" />
-              </UFormField>
+              <div class="space-y-2">
+                <Label for="minLength">Min Length</Label>
+                <Input id="minLength" v-model.number="fieldForm.minLength" type="number" min="0" />
+              </div>
+              <div class="space-y-2">
+                <Label for="maxLength">Max Length</Label>
+                <Input id="maxLength" v-model.number="fieldForm.maxLength" type="number" min="1" />
+              </div>
             </div>
+          </template>
 
-            <!-- Required & Unique -->
-            <div class="flex gap-6">
+          <!-- Number options -->
+          <template v-if="showTypeOptions.number">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label for="minValue">Min Value</Label>
+                <Input id="minValue" v-model.number="fieldForm.min" type="number" />
+              </div>
+              <div class="space-y-2">
+                <Label for="maxValue">Max Value</Label>
+                <Input id="maxValue" v-model.number="fieldForm.max" type="number" />
+              </div>
+            </div>
+          </template>
+
+          <!-- Enum options -->
+          <template v-if="showTypeOptions.enum">
+            <div class="space-y-2">
+              <Label for="enumOptions">Options</Label>
+              <p class="text-xs text-[hsl(var(--muted-foreground))]">Comma-separated values</p>
+              <Input
+                id="enumOptions"
+                v-model="fieldForm.options"
+                placeholder="draft, published, archived"
+              />
+              <p v-if="validationErrors.options" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.options }}</p>
+            </div>
+          </template>
+
+          <!-- UID options -->
+          <template v-if="showTypeOptions.uid">
+            <div class="space-y-2">
+              <Label>Target Field</Label>
+              <p class="text-xs text-[hsl(var(--muted-foreground))]">Field to generate slug from</p>
+              <Select v-model="fieldForm.targetField">
+                <SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="f in availableFieldsForTarget" :key="f" :value="f">{{ f }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="validationErrors.targetField" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.targetField }}</p>
+            </div>
+          </template>
+
+          <!-- Media options -->
+          <template v-if="showTypeOptions.media">
+            <div class="space-y-3">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  v-model="fieldForm.required"
-                  class="rounded border-stone-300 dark:border-stone-600"
+                  v-model="fieldForm.multiple"
+                  class="rounded border-[hsl(var(--border))]"
                 />
-                <span class="text-sm text-stone-700 dark:text-stone-300">Required</span>
+                <span class="text-sm text-[hsl(var(--foreground))]">Allow Multiple</span>
               </label>
               <label class="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  v-model="fieldForm.unique"
-                  class="rounded border-stone-300 dark:border-stone-600"
+                  v-model="fieldForm.allowFolderSelection"
+                  class="rounded border-[hsl(var(--border))]"
                 />
-                <span class="text-sm text-stone-700 dark:text-stone-300">Unique</span>
+                <span class="text-sm text-[hsl(var(--foreground))]">Allow Folder Selection</span>
               </label>
+              <div class="space-y-2">
+                <Label>Allowed Types</Label>
+                <div class="flex flex-wrap gap-2">
+                  <label
+                    v-for="opt in mediaTypeOptions"
+                    :key="opt.value"
+                    class="flex items-center gap-1.5 cursor-pointer text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="fieldForm.allowedTypes.includes(opt.value)"
+                      class="rounded border-[hsl(var(--border))]"
+                      @change="(e: Event) => {
+                        const checked = (e.target as HTMLInputElement).checked
+                        if (checked) fieldForm.allowedTypes.push(opt.value)
+                        else fieldForm.allowedTypes = fieldForm.allowedTypes.filter(t => t !== opt.value)
+                      }"
+                    />
+                    <span class="text-[hsl(var(--foreground))]">{{ opt.label }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
+          </template>
 
-            <!-- String/Text options -->
-            <template v-if="showTypeOptions.string">
-              <div class="grid grid-cols-2 gap-4">
-                <UFormField label="Min Length">
-                  <UInput v-model.number="fieldForm.minLength" type="number" min="0" />
-                </UFormField>
-                <UFormField label="Max Length">
-                  <UInput v-model.number="fieldForm.maxLength" type="number" min="1" />
-                </UFormField>
-              </div>
-            </template>
-
-            <!-- Number options -->
-            <template v-if="showTypeOptions.number">
-              <div class="grid grid-cols-2 gap-4">
-                <UFormField label="Min Value">
-                  <UInput v-model.number="fieldForm.min" type="number" />
-                </UFormField>
-                <UFormField label="Max Value">
-                  <UInput v-model.number="fieldForm.max" type="number" />
-                </UFormField>
-              </div>
-            </template>
-
-            <!-- Enum options -->
-            <template v-if="showTypeOptions.enum">
-              <UFormField label="Options" hint="Comma-separated values" :error="validationErrors.options">
-                <UInput
-                  v-model="fieldForm.options"
-                  placeholder="draft, published, archived"
+          <!-- Relation options -->
+          <template v-if="showTypeOptions.relation">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label for="relationTo">Related Content Type</Label>
+                <Input
+                  id="relationTo"
+                  v-model="fieldForm.relationTo"
+                  placeholder="e.g., author, category"
                 />
-              </UFormField>
-            </template>
-
-            <!-- UID options -->
-            <template v-if="showTypeOptions.uid">
-              <UFormField label="Target Field" hint="Field to generate slug from" :error="validationErrors.targetField">
-                <USelect
-                  v-model="fieldForm.targetField"
-                  :items="availableFieldsForTarget.map(f => ({ label: f, value: f }))"
-                  placeholder="Select a field"
-                />
-              </UFormField>
-            </template>
-
-            <!-- Media options -->
-            <template v-if="showTypeOptions.media">
-              <div class="space-y-3">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="fieldForm.multiple"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">Allow Multiple</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="fieldForm.allowFolderSelection"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">Allow Folder Selection</span>
-                </label>
-                <UFormField label="Allowed Types">
-                  <div class="flex flex-wrap gap-2">
-                    <label
-                      v-for="opt in mediaTypeOptions"
-                      :key="opt.value"
-                      class="flex items-center gap-1.5 cursor-pointer text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        :checked="fieldForm.allowedTypes.includes(opt.value)"
-                        class="rounded border-stone-300 dark:border-stone-600"
-                        @change="(e: Event) => {
-                          const checked = (e.target as HTMLInputElement).checked
-                          if (checked) fieldForm.allowedTypes.push(opt.value)
-                          else fieldForm.allowedTypes = fieldForm.allowedTypes.filter(t => t !== opt.value)
-                        }"
-                      />
-                      <span class="text-stone-700 dark:text-stone-300">{{ opt.label }}</span>
-                    </label>
-                  </div>
-                </UFormField>
+                <p v-if="validationErrors.relationTo" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.relationTo }}</p>
               </div>
-            </template>
-
-            <!-- Relation options -->
-            <template v-if="showTypeOptions.relation">
-              <div class="grid grid-cols-2 gap-4">
-                <UFormField label="Related Content Type" :error="validationErrors.relationTo">
-                  <UInput
-                    v-model="fieldForm.relationTo"
-                    placeholder="e.g., author, category"
-                  />
-                </UFormField>
-                <UFormField label="Relation Type">
-                  <USelect
-                    v-model="fieldForm.relationType"
-                    :items="relationTypes"
-                    value-key="value"
-                    label-key="label"
-                  />
-                </UFormField>
+              <div class="space-y-2">
+                <Label>Relation Type</Label>
+                <Select v-model="fieldForm.relationType">
+                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="rt in relationTypes" :key="rt.value" :value="rt.value">{{ rt.label }}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </template>
-
-            <!-- Actions -->
-            <div class="flex justify-end gap-2 pt-4 border-t border-stone-200 dark:border-stone-700">
-              <UButton variant="ghost" color="neutral" @click="showFieldModal = false">
-                Cancel
-              </UButton>
-              <UButton type="submit" color="neutral">
-                {{ editingFieldName ? 'Update' : 'Add' }} Field
-              </UButton>
             </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          </template>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
+            <Button variant="ghost" @click="showFieldModal = false">
+              Cancel
+            </Button>
+            <Button type="submit">
+              {{ editingFieldName ? 'Update' : 'Add' }} Field
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { MediaItem, FolderTreeNodeWithCount } from '~~/lib/publisher-admin/types/media'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Folder, AlertTriangle, LayoutGrid, List } from 'lucide-vue-next'
 
 interface FileBrowserProps {
   mode: 'single' | 'multiple' | 'folder'
@@ -383,33 +386,32 @@ defineExpose({
 </script>
 
 <template>
-  <div class="file-browser flex flex-col h-full bg-white dark:bg-stone-900 rounded-lg overflow-hidden">
+  <div class="file-browser flex flex-col h-full bg-[hsl(var(--card))] rounded-lg overflow-hidden">
     <!-- Top Bar: Search + View Toggle + Breadcrumb -->
-    <div class="flex-shrink-0 border-b border-stone-200 dark:border-stone-800">
+    <div class="flex-shrink-0 border-b border-[hsl(var(--border))]">
       <!-- Breadcrumb Navigation -->
-      <div class="flex items-center gap-2 px-4 py-3 border-b border-stone-100 dark:border-stone-800">
-        <UIcon
-          name="i-heroicons-folder"
-          class="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0"
+      <div class="flex items-center gap-2 px-4 py-3 border-b border-[hsl(var(--border))]">
+        <Folder
+          class="w-4 h-4 text-[hsl(var(--primary))] flex-shrink-0"
         />
         <nav class="flex items-center gap-1 text-sm overflow-x-auto">
           <template v-for="(crumb, index) in breadcrumbItems" :key="crumb.id ?? 'root'">
             <button
               v-if="index < breadcrumbItems.length - 1"
-              class="text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors whitespace-nowrap"
+              class="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors whitespace-nowrap"
               @click="handleBreadcrumbClick(crumb.id)"
             >
               {{ crumb.label }}
             </button>
             <span
               v-else
-              class="text-amber-700 dark:text-amber-500 font-medium whitespace-nowrap"
+              class="text-[hsl(var(--primary))] font-medium whitespace-nowrap"
             >
               {{ crumb.label }}
             </span>
             <span
               v-if="index < breadcrumbItems.length - 1"
-              class="text-stone-300 dark:text-stone-600"
+              class="text-[hsl(var(--muted-foreground))]"
             >
               /
             </span>
@@ -420,42 +422,42 @@ defineExpose({
       <!-- Search + View Toggle -->
       <div class="flex items-center justify-between gap-4 px-4 py-3">
         <!-- Search Input -->
-        <UInput
-          :model-value="searchQuery"
-          icon="i-heroicons-magnifying-glass"
-          placeholder="Search files..."
-          class="flex-1 max-w-md"
-          @update:model-value="handleSearchInput"
-        />
+        <div class="flex-1 max-w-md relative">
+          <Input
+            :model-value="searchQuery"
+            placeholder="Search files..."
+            @update:model-value="handleSearchInput"
+          />
+        </div>
 
         <!-- View Toggle + Selection Info -->
         <div class="flex items-center gap-3">
           <!-- Selection count -->
           <span
             v-if="hasSelection"
-            class="text-sm text-stone-500 dark:text-stone-400"
+            class="text-sm text-[hsl(var(--muted-foreground))]"
           >
             {{ selectionCount }} selected
           </span>
 
           <!-- View Toggle -->
-          <div class="flex items-center border border-stone-200 dark:border-stone-700 rounded-lg overflow-hidden">
-            <UButton
-              :color="viewMode === 'grid' ? 'neutral' : 'neutral'"
-              :variant="viewMode === 'grid' ? 'solid' : 'ghost'"
-              icon="i-heroicons-squares-2x2"
-              size="xs"
+          <div class="flex items-center border border-[hsl(var(--border))] rounded-lg overflow-hidden">
+            <Button
+              :variant="viewMode === 'grid' ? 'default' : 'ghost'"
+              size="sm"
               class="rounded-none"
               @click="viewMode = 'grid'"
-            />
-            <UButton
-              :color="viewMode === 'list' ? 'neutral' : 'neutral'"
-              :variant="viewMode === 'list' ? 'solid' : 'ghost'"
-              icon="i-heroicons-list-bullet"
-              size="xs"
+            >
+              <LayoutGrid class="h-4 w-4" />
+            </Button>
+            <Button
+              :variant="viewMode === 'list' ? 'default' : 'ghost'"
+              size="sm"
               class="rounded-none"
               @click="viewMode = 'list'"
-            />
+            >
+              <List class="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
@@ -464,7 +466,7 @@ defineExpose({
     <!-- Main Content: Two-Pane Layout -->
     <div class="flex flex-1 min-h-0 overflow-hidden">
       <!-- Left Pane: Folder Tree (240px fixed) -->
-      <aside class="flex-shrink-0 w-60 border-r border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 overflow-y-auto">
+      <aside class="flex-shrink-0 w-60 border-r border-[hsl(var(--border))] bg-[hsl(var(--background))] overflow-y-auto">
         <div class="p-3">
           <PublisherFolderTree
             :folders="folderTree"
@@ -484,19 +486,17 @@ defineExpose({
           class="flex-1 flex items-center justify-center p-4"
         >
           <div class="text-center">
-            <UIcon
-              name="i-heroicons-exclamation-triangle"
-              class="w-8 h-8 text-red-500 dark:text-red-400 mx-auto mb-2"
+            <AlertTriangle
+              class="w-8 h-8 text-[hsl(var(--destructive))] mx-auto mb-2"
             />
-            <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">{{ error }}</p>
-            <UButton
+            <p class="text-sm text-[hsl(var(--muted-foreground))] mb-3">{{ error }}</p>
+            <Button
               variant="outline"
-              color="neutral"
               size="sm"
               @click="fetchFiles"
             >
               Retry
-            </UButton>
+            </Button>
           </div>
         </div>
 
@@ -505,11 +505,11 @@ defineExpose({
           <!-- Folder mode: show selected folder info -->
           <div
             v-if="mode === 'folder' && selectedFolderId !== null"
-            class="flex-shrink-0 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-100 dark:border-amber-900"
+            class="flex-shrink-0 px-4 py-2 bg-[hsl(var(--accent))] border-b border-[hsl(var(--border))]"
           >
             <div class="flex items-center gap-2 text-sm">
-              <UIcon name="i-heroicons-folder" class="w-4 h-4 text-amber-600 dark:text-amber-500" />
-              <span class="text-amber-700 dark:text-amber-400 font-medium">
+              <Folder class="w-4 h-4 text-[hsl(var(--primary))]" />
+              <span class="text-[hsl(var(--primary))] font-medium">
                 Selected: {{ selectedFolderName ?? 'Unknown folder' }}
               </span>
             </div>

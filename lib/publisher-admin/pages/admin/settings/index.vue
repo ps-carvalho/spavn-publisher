@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { TabsItem } from '@nuxt/ui'
+import { ShieldAlert } from 'lucide-vue-next'
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
@@ -15,58 +16,28 @@ const isAdminUser = computed(() => {
   return user.value?.role === 'admin' || user.value?.role === 'super-admin'
 })
 
-// All tab definitions (Security Policies is conditionally included based on role)
-const allItems: TabsItem[] = [
-  {
-    label: 'Storage',
-    icon: 'i-heroicons-circle-stack',
-    value: 'storage',
-    slot: 'storage' as const,
-  },
-  {
-    label: 'General',
-    icon: 'i-heroicons-cog-6-tooth',
-    value: 'general',
-    slot: 'general' as const,
-  },
-  {
-    label: 'My Preferences',
-    icon: 'i-heroicons-user-circle',
-    value: 'users',
-    slot: 'users' as const,
-  },
-  {
-    label: 'My Security',
-    icon: 'i-heroicons-shield-check',
-    value: 'my-security',
-    slot: 'my-security' as const,
-  },
-  {
-    label: 'Email',
-    icon: 'i-heroicons-envelope',
-    value: 'email',
-    slot: 'email' as const,
-  },
-  {
-    label: 'Security Policies',
-    icon: 'i-heroicons-shield-exclamation',
-    value: 'security-policies',
-    slot: 'security-policies' as const,
-  },
+// All tab definitions
+const allTabs = [
+  { label: 'Storage', value: 'storage' },
+  { label: 'General', value: 'general' },
+  { label: 'My Preferences', value: 'users' },
+  { label: 'My Security', value: 'my-security' },
+  { label: 'Email', value: 'email' },
+  { label: 'Security Policies', value: 'security-policies' },
 ]
 
 // Filter tabs based on user role — Security Policies is admin-only
-const items = computed<TabsItem[]>(() => {
+const visibleTabs = computed(() => {
   if (isAdminUser.value) {
-    return allItems
+    return allTabs
   }
-  return allItems.filter(item => item.value !== 'security-policies')
+  return allTabs.filter(tab => tab.value !== 'security-policies')
 })
 
 // Get default tab from URL query parameter
 const defaultTab = computed(() => {
   const tabParam = route.query.tab as string
-  if (tabParam && items.value.some(item => item.value === tabParam)) {
+  if (tabParam && visibleTabs.value.some(tab => tab.value === tabParam)) {
     return tabParam
   }
   return 'storage'
@@ -81,66 +52,74 @@ function handleTabChange(value: string) {
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">Settings</h2>
-      <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">Manage your site configuration and preferences</p>
+      <h2 class="text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">Settings</h2>
+      <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">Manage your site configuration and preferences</p>
     </div>
 
-    <UTabs
-      :items="items"
+    <Tabs
       :default-value="defaultTab"
-      color="neutral"
-      variant="link"
       class="w-full"
       @update:model-value="handleTabChange"
     >
-      <template #storage>
-        <div class="mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8">
+      <TabsList>
+        <TabsTrigger
+          v-for="tab in visibleTabs"
+          :key="tab.value"
+          :value="tab.value"
+        >
+          {{ tab.label }}
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="storage">
+        <div class="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 sm:p-8">
           <PublisherSettingsStorageSettings />
         </div>
-      </template>
+      </TabsContent>
 
-      <template #general>
-        <div class="mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8">
+      <TabsContent value="general">
+        <div class="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 sm:p-8">
           <PublisherSettingsGeneralSettings />
         </div>
-      </template>
+      </TabsContent>
 
-      <template #users>
-        <div class="mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8">
+      <TabsContent value="users">
+        <div class="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 sm:p-8">
           <PublisherSettingsUserSettings />
         </div>
-      </template>
+      </TabsContent>
 
-      <template #my-security>
-        <div class="mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8">
+      <TabsContent value="my-security">
+        <div class="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 sm:p-8">
           <PublisherSettingsMySecuritySettings />
         </div>
-      </template>
+      </TabsContent>
 
-      <template #email>
-        <div class="mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8">
+      <TabsContent value="email">
+        <div class="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 sm:p-8">
           <PublisherSettingsEmailSettings />
         </div>
-      </template>
+      </TabsContent>
 
-      <template #security-policies>
-        <div class="mt-6 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8">
+      <TabsContent v-if="isAdminUser" value="security-policies">
+        <div class="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 sm:p-8">
           <div class="text-center py-12">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 ring-1 ring-amber-200/60 dark:ring-amber-800/30 mb-4">
-              <UIcon name="i-heroicons-shield-exclamation" class="text-2xl text-amber-600 dark:text-amber-400" />
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[hsl(var(--muted))] ring-1 ring-[hsl(var(--border))] mb-4">
+              <ShieldAlert class="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
             </div>
-            <p class="text-stone-800 dark:text-stone-200 font-semibold">Manage organization security policies</p>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1.5 mb-5 max-w-sm mx-auto">
+            <p class="text-[hsl(var(--foreground))] font-semibold">Manage organization security policies</p>
+            <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1.5 mb-5 max-w-sm mx-auto">
               Configure authentication requirements and security policies for all users.
             </p>
             <NuxtLink to="/admin/settings/security">
-              <UButton icon="i-heroicons-shield-exclamation">
+              <Button>
+                <ShieldAlert class="h-4 w-4 mr-2" />
                 Security Policies
-              </UButton>
+              </Button>
             </NuxtLink>
           </div>
         </div>
-      </template>
-    </UTabs>
+      </TabsContent>
+    </Tabs>
   </div>
 </template>

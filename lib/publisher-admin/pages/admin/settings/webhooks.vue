@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import { Plus, Play, FileText, Pencil, Trash2, Zap, Clipboard, RefreshCw, AlertTriangle, Loader2 } from 'lucide-vue-next'
+import {
+  Button, Input, Label, Switch,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Alert, AlertTitle, AlertDescription,
+} from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
@@ -23,7 +33,7 @@ interface WebhookLog {
   deliveredAt: string
 }
 
-const toast = useToast()
+const { toast } = useToast()
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showLogsSlide = ref(false)
@@ -65,14 +75,6 @@ const availableEvents = [
 const { data, refresh, status } = await useFetch<{ data: Webhook[] }>('/api/publisher/webhooks')
 const webhooks = computed(() => data.value?.data || [])
 
-const columns = [
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'url', header: 'URL' },
-  { accessorKey: 'events', header: 'Events' },
-  { accessorKey: 'active', header: 'Active' },
-  { id: 'actions', header: '' },
-]
-
 async function createWebhook() {
   if (!createForm.value.name.trim() || !createForm.value.url.trim()) return
   isSubmitting.value = true
@@ -88,16 +90,16 @@ async function createWebhook() {
     await refresh()
 
     if (createdSecret.value) {
-      toast.add({ title: 'Webhook created', description: 'Save the signing secret now.', color: 'success' })
+      toast({ title: 'Webhook created', description: 'Save the signing secret now.' })
     }
     else {
       showCreateModal.value = false
-      toast.add({ title: 'Webhook created', color: 'success' })
+      toast({ title: 'Webhook created' })
     }
   }
   catch (e: unknown) {
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({ title: err?.data?.data?.error?.message || 'Failed to create webhook', color: 'error' })
+    toast({ title: err?.data?.data?.error?.message || 'Failed to create webhook', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -130,11 +132,11 @@ async function saveEdit() {
     })
     await refresh()
     showEditModal.value = false
-    toast.add({ title: 'Webhook updated', color: 'success' })
+    toast({ title: 'Webhook updated' })
   }
   catch (e: unknown) {
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({ title: err?.data?.data?.error?.message || 'Failed to update webhook', color: 'error' })
+    toast({ title: err?.data?.data?.error?.message || 'Failed to update webhook', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -150,7 +152,7 @@ async function toggleActive(webhook: Webhook) {
     await refresh()
   }
   catch {
-    toast.add({ title: 'Failed to toggle webhook', color: 'error' })
+    toast({ title: 'Failed to toggle webhook', variant: 'destructive' })
   }
 }
 
@@ -160,10 +162,10 @@ async function deleteWebhook(webhook: Webhook) {
   try {
     await $fetch(`/api/publisher/webhooks/${webhook.id}`, { method: 'DELETE' })
     await refresh()
-    toast.add({ title: 'Webhook deleted', color: 'success' })
+    toast({ title: 'Webhook deleted' })
   }
   catch {
-    toast.add({ title: 'Failed to delete webhook', color: 'error' })
+    toast({ title: 'Failed to delete webhook', variant: 'destructive' })
   }
 }
 
@@ -177,18 +179,18 @@ async function testWebhook(webhook: Webhook) {
     )
 
     if (result.data.success) {
-      toast.add({ title: 'Test successful', description: `Status: ${result.data.statusCode}`, color: 'success' })
+      toast({ title: 'Test successful', description: `Status: ${result.data.statusCode}` })
     }
     else {
-      toast.add({
+      toast({
         title: 'Test failed',
         description: `Status: ${result.data.statusCode || 'Network error'}`,
-        color: 'error',
+        variant: 'destructive',
       })
     }
   }
   catch {
-    toast.add({ title: 'Failed to send test', color: 'error' })
+    toast({ title: 'Failed to send test', variant: 'destructive' })
   }
   finally {
     isTesting.value = false
@@ -207,7 +209,7 @@ async function viewLogs(webhook: Webhook) {
     logs.value = result.data
   }
   catch {
-    toast.add({ title: 'Failed to load logs', color: 'error' })
+    toast({ title: 'Failed to load logs', variant: 'destructive' })
   }
   finally {
     logsLoading.value = false
@@ -217,27 +219,27 @@ async function viewLogs(webhook: Webhook) {
 function copySecret() {
   if (createdSecret.value) {
     navigator.clipboard.writeText(createdSecret.value)
-    toast.add({ title: 'Secret copied to clipboard', color: 'success' })
+    toast({ title: 'Secret copied to clipboard' })
   }
 }
 
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—'
+  if (!dateStr) return '---'
   return new Date(dateStr).toLocaleString()
 }
 
 function getStatusDotClass(code: number | null): string {
-  if (!code || code === 0) return 'bg-red-500 dark:bg-red-400'
-  if (code >= 200 && code < 300) return 'bg-green-600 dark:bg-green-400'
-  if (code >= 400 && code < 500) return 'bg-amber-500 dark:bg-amber-400'
-  return 'bg-red-500 dark:bg-red-400'
+  if (!code || code === 0) return 'bg-[hsl(var(--destructive))]'
+  if (code >= 200 && code < 300) return 'bg-[hsl(var(--accent))]'
+  if (code >= 400 && code < 500) return 'bg-[hsl(var(--muted-foreground))]'
+  return 'bg-[hsl(var(--destructive))]'
 }
 
 function getStatusTextClass(code: number | null): string {
-  if (!code || code === 0) return 'text-red-500 dark:text-red-400'
-  if (code >= 200 && code < 300) return 'text-green-600 dark:text-green-400'
-  if (code >= 400 && code < 500) return 'text-amber-500 dark:text-amber-400'
-  return 'text-red-500 dark:text-red-400'
+  if (!code || code === 0) return 'text-[hsl(var(--destructive))]'
+  if (code >= 200 && code < 300) return 'text-[hsl(var(--accent-foreground))]'
+  if (code >= 400 && code < 500) return 'text-[hsl(var(--muted-foreground))]'
+  return 'text-[hsl(var(--destructive))]'
 }
 
 function isEventSelected(eventValue: string): boolean {
@@ -273,223 +275,244 @@ function toggleEditEvent(eventValue: string) {
   <div>
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Webhooks</h2>
-      <UButton icon="i-heroicons-plus" color="neutral" @click="showCreateModal = true">
+      <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">Webhooks</h2>
+      <Button @click="showCreateModal = true">
+        <Plus class="h-4 w-4 mr-2" />
         Create Webhook
-      </UButton>
+      </Button>
     </div>
 
     <!-- Created secret alert -->
-    <UAlert
-      v-if="createdSecret"
-      color="warning"
-      variant="subtle"
-      icon="i-heroicons-exclamation-triangle"
-      title="Save your signing secret!"
-      class="mb-6"
-      :close-button="{ onClick: () => createdSecret = null }"
-    >
-      <template #description>
+    <Alert v-if="createdSecret" variant="destructive" class="mb-6">
+      <AlertTriangle class="h-4 w-4" />
+      <AlertTitle>Save your signing secret!</AlertTitle>
+      <AlertDescription>
         <p class="text-sm mb-2">This secret is used to verify webhook payloads. It won't be shown again.</p>
         <div class="flex items-center gap-2">
-          <code class="text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-2 py-1 rounded font-mono break-all">{{ createdSecret }}</code>
-          <UButton size="xs" variant="outline" color="neutral" icon="i-heroicons-clipboard" @click="copySecret">
+          <code class="text-xs bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] px-2 py-1 rounded font-mono break-all">{{ createdSecret }}</code>
+          <Button size="sm" variant="outline" @click="copySecret">
+            <Clipboard class="h-3 w-3 mr-1" />
             Copy
-          </UButton>
+          </Button>
         </div>
-      </template>
-    </UAlert>
+      </AlertDescription>
+    </Alert>
 
     <!-- Webhooks table -->
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable :data="webhooks" :columns="columns" :loading="status === 'pending'">
-        <template #name-cell="{ row }">
-          <span class="font-medium text-stone-900 dark:text-stone-100">{{ row.original.name }}</span>
-        </template>
-
-        <template #url-cell="{ row }">
-          <code class="text-xs font-mono text-stone-600 dark:text-stone-400 truncate max-w-xs block">{{ row.original.url }}</code>
-        </template>
-
-        <template #events-cell="{ row }">
-          <div class="flex flex-wrap gap-1">
-            <span
-              v-for="evt in row.original.events.slice(0, 3)"
-              :key="evt"
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-            >
-              {{ evt }}
-            </span>
-            <span
-              v-if="row.original.events.length > 3"
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400"
-            >
-              +{{ row.original.events.length - 3 }}
-            </span>
-          </div>
-        </template>
-
-        <template #active-cell="{ row }">
-          <USwitch
-            :model-value="row.original.isActive"
-            @update:model-value="toggleActive(row.original)"
-          />
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-play"
-              :loading="isTesting"
-              @click="testWebhook(row.original)"
-            />
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-document-text"
-              @click="viewLogs(row.original)"
-            />
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-pencil"
-              @click="openEdit(row.original)"
-            />
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
-              @click="deleteWebhook(row.original)"
-            />
-          </div>
-        </template>
-      </UTable>
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>URL</TableHead>
+            <TableHead>Events</TableHead>
+            <TableHead>Active</TableHead>
+            <TableHead class="w-[150px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="status === 'pending'">
+            <TableCell colspan="5" class="text-center py-8">
+              <Loader2 class="h-6 w-6 animate-spin mx-auto text-[hsl(var(--muted-foreground))]" />
+            </TableCell>
+          </TableRow>
+          <TableRow v-for="webhook in webhooks" :key="webhook.id">
+            <TableCell>
+              <span class="font-medium text-[hsl(var(--foreground))]">{{ webhook.name }}</span>
+            </TableCell>
+            <TableCell>
+              <code class="text-xs font-mono text-[hsl(var(--muted-foreground))] truncate max-w-xs block">{{ webhook.url }}</code>
+            </TableCell>
+            <TableCell>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="evt in webhook.events.slice(0, 3)"
+                  :key="evt"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                >
+                  {{ evt }}
+                </span>
+                <span
+                  v-if="webhook.events.length > 3"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                >
+                  +{{ webhook.events.length - 3 }}
+                </span>
+              </div>
+            </TableCell>
+            <TableCell>
+              <Switch
+                :checked="webhook.isActive"
+                @update:checked="toggleActive(webhook)"
+              />
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  :disabled="isTesting"
+                  @click="testWebhook(webhook)"
+                >
+                  <Loader2 v-if="isTesting" class="h-4 w-4 animate-spin" />
+                  <Play v-else class="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  @click="viewLogs(webhook)"
+                >
+                  <FileText class="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  @click="openEdit(webhook)"
+                >
+                  <Pencil class="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  @click="deleteWebhook(webhook)"
+                >
+                  <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
 
       <!-- Empty state -->
       <div v-if="webhooks.length === 0 && status !== 'pending'" class="text-center py-12">
-        <UIcon name="i-heroicons-bolt" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400">No webhooks configured yet.</p>
-        <p class="text-sm text-stone-400 dark:text-stone-500 mt-1">Create a webhook to receive event notifications.</p>
+        <Zap class="w-9 h-9 text-[hsl(var(--muted-foreground))] mx-auto mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">No webhooks configured yet.</p>
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">Create a webhook to receive event notifications.</p>
       </div>
     </div>
 
     <!-- Create Modal -->
-    <UModal v-model:open="showCreateModal" @close="closeCreateModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create Webhook</h3>
-          <form @submit.prevent="createWebhook" class="space-y-4">
-            <UFormField label="Name" required>
-              <UInput v-model="createForm.name" placeholder="e.g., Deploy Hook" class="w-full" />
-            </UFormField>
+    <Dialog v-model:open="showCreateModal" @close="closeCreateModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Webhook</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="createWebhook" class="space-y-4">
+          <div class="space-y-2">
+            <Label for="webhook-name">Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="webhook-name" v-model="createForm.name" placeholder="e.g., Deploy Hook" class="w-full" />
+          </div>
 
-            <UFormField label="URL" required>
-              <UInput v-model="createForm.url" placeholder="https://example.com/webhook" type="url" class="w-full" />
-            </UFormField>
+          <div class="space-y-2">
+            <Label for="webhook-url">URL <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="webhook-url" v-model="createForm.url" placeholder="https://example.com/webhook" type="url" class="w-full" />
+          </div>
 
-            <UFormField label="Events">
-              <div class="space-y-2">
-                <label
-                  v-for="evt in availableEvents"
-                  :key="evt.value"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="isEventSelected(evt.value)"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                    @change="toggleCreateEvent(evt.value)"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">{{ evt.label }}</span>
-                  <code class="text-xs text-stone-400 dark:text-stone-500 font-mono">{{ evt.value }}</code>
-                </label>
-              </div>
-            </UFormField>
-
-            <div class="flex justify-end gap-2">
-              <UButton variant="ghost" color="neutral" @click="closeCreateModal">Cancel</UButton>
-              <UButton
-                type="submit"
-                color="neutral"
-                :loading="isSubmitting"
-                :disabled="!createForm.name.trim() || !createForm.url.trim() || createForm.events.length === 0"
+          <div class="space-y-2">
+            <Label>Events</Label>
+            <div class="space-y-2">
+              <label
+                v-for="evt in availableEvents"
+                :key="evt.value"
+                class="flex items-center gap-2 cursor-pointer"
               >
-                Create
-              </UButton>
+                <input
+                  type="checkbox"
+                  :checked="isEventSelected(evt.value)"
+                  class="rounded border-[hsl(var(--border))]"
+                  @change="toggleCreateEvent(evt.value)"
+                />
+                <span class="text-sm text-[hsl(var(--foreground))]">{{ evt.label }}</span>
+                <code class="text-xs text-[hsl(var(--muted-foreground))] font-mono">{{ evt.value }}</code>
+              </label>
             </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" @click="closeCreateModal">Cancel</Button>
+            <Button
+              type="submit"
+              :disabled="!createForm.name.trim() || !createForm.url.trim() || createForm.events.length === 0 || isSubmitting"
+            >
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Create
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Edit Modal -->
-    <UModal v-model:open="showEditModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit Webhook</h3>
-          <form @submit.prevent="saveEdit" class="space-y-4">
-            <UFormField label="Name">
-              <UInput v-model="editForm.name" class="w-full" />
-            </UFormField>
+    <Dialog v-model:open="showEditModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Webhook</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="saveEdit" class="space-y-4">
+          <div class="space-y-2">
+            <Label for="edit-webhook-name">Name</Label>
+            <Input id="edit-webhook-name" v-model="editForm.name" class="w-full" />
+          </div>
 
-            <UFormField label="URL">
-              <UInput v-model="editForm.url" type="url" class="w-full" />
-            </UFormField>
+          <div class="space-y-2">
+            <Label for="edit-webhook-url">URL</Label>
+            <Input id="edit-webhook-url" v-model="editForm.url" type="url" class="w-full" />
+          </div>
 
-            <UFormField label="Events">
-              <div class="space-y-2">
-                <label
-                  v-for="evt in availableEvents"
-                  :key="evt.value"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="isEditEventSelected(evt.value)"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                    @change="toggleEditEvent(evt.value)"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">{{ evt.label }}</span>
-                  <code class="text-xs text-stone-400 dark:text-stone-500 font-mono">{{ evt.value }}</code>
-                </label>
-              </div>
-            </UFormField>
-
-            <div class="flex justify-end gap-2">
-              <UButton variant="ghost" color="neutral" @click="showEditModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Save</UButton>
+          <div class="space-y-2">
+            <Label>Events</Label>
+            <div class="space-y-2">
+              <label
+                v-for="evt in availableEvents"
+                :key="evt.value"
+                class="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="isEditEventSelected(evt.value)"
+                  class="rounded border-[hsl(var(--border))]"
+                  @change="toggleEditEvent(evt.value)"
+                />
+                <span class="text-sm text-[hsl(var(--foreground))]">{{ evt.label }}</span>
+                <code class="text-xs text-[hsl(var(--muted-foreground))] font-mono">{{ evt.value }}</code>
+              </label>
             </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          </div>
 
-    <!-- Delivery Logs Slideover -->
-    <USlideover v-model:open="showLogsSlide">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Delivery Logs</h3>
-          <p class="text-sm text-stone-400 dark:text-stone-500 mb-4">{{ selectedWebhook?.name }} — Last 10 deliveries</p>
+          <DialogFooter>
+            <Button variant="ghost" @click="showEditModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
+    <!-- Delivery Logs Sheet -->
+    <Sheet v-model:open="showLogsSlide">
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Delivery Logs</SheetTitle>
+          <SheetDescription>{{ selectedWebhook?.name }} -- Last 10 deliveries</SheetDescription>
+        </SheetHeader>
+
+        <div class="mt-6">
           <div v-if="logsLoading" class="flex justify-center py-8">
-            <UIcon name="i-heroicons-arrow-path" class="animate-spin text-2xl text-stone-400" />
+            <RefreshCw class="w-6 h-6 animate-spin text-[hsl(var(--muted-foreground))]" />
           </div>
 
           <div v-else-if="logs.length === 0" class="text-center py-8">
-            <p class="text-stone-400 dark:text-stone-500">No delivery logs yet.</p>
+            <p class="text-[hsl(var(--muted-foreground))]">No delivery logs yet.</p>
           </div>
 
           <div v-else class="space-y-3">
             <div
               v-for="log in logs"
               :key="log.id"
-              class="border border-stone-200 dark:border-stone-700 rounded-lg p-3"
+              class="border border-[hsl(var(--border))] rounded-lg p-3"
             >
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
@@ -497,21 +520,21 @@ function toggleEditEvent(eventValue: string) {
                   <span class="text-sm font-medium" :class="getStatusTextClass(log.statusCode)">
                     {{ log.statusCode || 'ERR' }}
                   </span>
-                  <span class="text-sm text-stone-700 dark:text-stone-300 font-medium">{{ log.event }}</span>
+                  <span class="text-sm text-[hsl(var(--foreground))] font-medium">{{ log.event }}</span>
                 </div>
-                <span class="text-xs text-stone-400 dark:text-stone-500">{{ formatDate(log.deliveredAt) }}</span>
+                <span class="text-xs text-[hsl(var(--muted-foreground))]">{{ formatDate(log.deliveredAt) }}</span>
               </div>
               <div v-if="log.responseBody" class="mt-1">
-                <code class="text-xs text-stone-500 dark:text-stone-400 break-all block max-h-20 overflow-auto font-mono">{{ log.responseBody }}</code>
+                <code class="text-xs text-[hsl(var(--muted-foreground))] break-all block max-h-20 overflow-auto font-mono">{{ log.responseBody }}</code>
               </div>
             </div>
           </div>
 
           <div class="mt-6">
-            <UButton variant="ghost" color="neutral" block @click="showLogsSlide = false">Close</UButton>
+            <Button variant="ghost" class="w-full" @click="showLogsSlide = false">Close</Button>
           </div>
         </div>
-      </template>
-    </USlideover>
+      </SheetContent>
+    </Sheet>
   </div>
 </template>

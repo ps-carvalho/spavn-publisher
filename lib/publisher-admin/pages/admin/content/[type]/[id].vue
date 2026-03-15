@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { ArrowLeft, Trash2, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
 })
 
 const route = useRoute()
-const toast = useToast()
+const { toast } = useToast()
 const typeName = computed(() => route.params.type as string)
 const entryId = computed(() => route.params.id as string)
 const isSaving = ref(false)
@@ -55,13 +60,13 @@ const sidebarFields = computed(() => {
 const currentStatus = computed(() => entryData.value?.data?.status as string || 'draft')
 
 function getStatusDotClass(status: string): string {
-  if (status === 'published') return 'bg-green-600 dark:bg-green-400'
-  return 'bg-amber-500 dark:bg-amber-400'
+  if (status === 'published') return 'bg-[hsl(var(--accent))]'
+  return 'bg-[hsl(var(--muted-foreground))]'
 }
 
 function getStatusTextClass(status: string): string {
-  if (status === 'published') return 'text-green-600 dark:text-green-400'
-  return 'text-amber-500 dark:text-amber-400'
+  if (status === 'published') return 'text-[hsl(var(--accent-foreground))]'
+  return 'text-[hsl(var(--muted-foreground))]'
 }
 
 async function save() {
@@ -76,11 +81,11 @@ async function save() {
     })
 
     await refreshEntry()
-    toast.add({ title: 'Saved', color: 'success' })
+    toast({ title: 'Saved' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to save'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSaving.value = false
@@ -97,10 +102,10 @@ async function publish() {
     })
 
     await refreshEntry()
-    toast.add({ title: 'Published!', color: 'success' })
+    toast({ title: 'Published!' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to publish', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to publish', variant: 'destructive' })
   }
   finally {
     isSaving.value = false
@@ -117,10 +122,10 @@ async function unpublish() {
     })
 
     await refreshEntry()
-    toast.add({ title: 'Unpublished', color: 'success' })
+    toast({ title: 'Unpublished' })
   }
   catch {
-    toast.add({ title: 'Failed to unpublish', color: 'error' })
+    toast({ title: 'Failed to unpublish', variant: 'destructive' })
   }
   finally {
     isSaving.value = false
@@ -133,11 +138,11 @@ const showDeleteModal = ref(false)
 async function deleteEntry() {
   try {
     await $fetch(`/api/v1/${typeName.value}/${entryId.value}`, { method: 'DELETE' })
-    toast.add({ title: 'Deleted', color: 'success' })
+    toast({ title: 'Deleted' })
     await navigateTo(`/admin/content/${typeName.value}`)
   }
   catch {
-    toast.add({ title: 'Failed to delete', color: 'error' })
+    toast({ title: 'Failed to delete', variant: 'destructive' })
   }
   finally {
     showDeleteModal.value = false
@@ -155,13 +160,12 @@ function formatDate(dateStr: unknown): string {
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <UButton
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-left"
-          :to="`/admin/content/${typeName}`"
-        />
-        <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+        <Button variant="ghost" as-child>
+          <NuxtLink :to="`/admin/content/${typeName}`">
+            <ArrowLeft class="h-4 w-4" />
+          </NuxtLink>
+        </Button>
+        <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
           Edit {{ contentType.displayName }}
         </h2>
         <!-- Status dot+text -->
@@ -183,7 +187,7 @@ function formatDate(dateStr: unknown): string {
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <!-- Main form (70%) -->
       <div class="lg:col-span-3">
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
           <form @submit.prevent="save" class="space-y-5">
             <PublisherFieldRenderer
               v-for="[name, config] in mainFields"
@@ -200,51 +204,51 @@ function formatDate(dateStr: unknown): string {
       <!-- Sidebar (30%) -->
       <div class="space-y-4">
         <!-- Actions -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
           <div class="space-y-3">
-            <UButton block color="neutral" @click="save" :loading="isSaving">
+            <Button class="w-full" variant="outline" @click="save" :disabled="isSaving">
+              <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
               Save
-            </UButton>
+            </Button>
 
             <template v-if="contentType.options?.draftAndPublish">
-              <UButton
+              <Button
                 v-if="currentStatus !== 'published'"
-                block
-                color="primary"
-                variant="soft"
+                class="w-full"
+                variant="outline"
                 @click="publish"
-                :loading="isSaving"
+                :disabled="isSaving"
               >
+                <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
                 Publish
-              </UButton>
-              <UButton
+              </Button>
+              <Button
                 v-else
-                block
-                color="primary"
+                class="w-full"
                 variant="outline"
                 @click="unpublish"
-                :loading="isSaving"
+                :disabled="isSaving"
               >
+                <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
                 Unpublish
-              </UButton>
+              </Button>
             </template>
 
-            <UButton
-              block
-              color="error"
+            <Button
+              class="w-full"
               variant="ghost"
-              icon="i-heroicons-trash"
               @click="showDeleteModal = true"
             >
+              <Trash2 class="h-4 w-4 mr-2 text-[hsl(var(--destructive))]" />
               Delete
-            </UButton>
+            </Button>
           </div>
         </div>
 
         <!-- Boolean fields -->
         <div
           v-if="sidebarFields.length > 0"
-          class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6"
+          class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6"
         >
           <div class="space-y-4">
             <PublisherFieldRenderer
@@ -259,30 +263,30 @@ function formatDate(dateStr: unknown): string {
         </div>
 
         <!-- Timestamps -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Details</h4>
-          <div class="space-y-2 text-sm text-stone-500 dark:text-stone-400">
-            <p><span class="font-medium text-stone-700 dark:text-stone-300">ID:</span> {{ entryData.data.id }}</p>
-            <p v-if="entryData.data.createdAt"><span class="font-medium text-stone-700 dark:text-stone-300">Created:</span> {{ formatDate(entryData.data.createdAt) }}</p>
-            <p v-if="entryData.data.updatedAt"><span class="font-medium text-stone-700 dark:text-stone-300">Updated:</span> {{ formatDate(entryData.data.updatedAt) }}</p>
-            <p v-if="entryData.data.publishedAt"><span class="font-medium text-stone-700 dark:text-stone-300">Published:</span> {{ formatDate(entryData.data.publishedAt) }}</p>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Details</h4>
+          <div class="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+            <p><span class="font-medium text-[hsl(var(--foreground))]">ID:</span> {{ entryData.data.id }}</p>
+            <p v-if="entryData.data.createdAt"><span class="font-medium text-[hsl(var(--foreground))]">Created:</span> {{ formatDate(entryData.data.createdAt) }}</p>
+            <p v-if="entryData.data.updatedAt"><span class="font-medium text-[hsl(var(--foreground))]">Updated:</span> {{ formatDate(entryData.data.updatedAt) }}</p>
+            <p v-if="entryData.data.publishedAt"><span class="font-medium text-[hsl(var(--foreground))]">Published:</span> {{ formatDate(entryData.data.publishedAt) }}</p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Delete confirmation -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">Delete Entry</h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">Are you sure? This cannot be undone.</p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">Cancel</UButton>
-            <UButton color="error" @click="deleteEntry">Delete</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Entry</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">Are you sure? This cannot be undone.</p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">Cancel</Button>
+          <Button variant="destructive" @click="deleteEntry">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -1,5 +1,14 @@
 <script setup lang="ts">
 import type { FieldConfig, AreaConfig, PageTypeOptions } from '~~/lib/publisher/types'
+import { Plus, Pencil, Trash2, Copy, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
@@ -24,7 +33,7 @@ interface BlockTypeSummary {
   displayName: string
 }
 
-const toast = useToast()
+const { toast } = useToast()
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const selectedPageType = ref<PageTypeSummary | null>(null)
@@ -72,15 +81,6 @@ const blockTypeOptions = computed(() =>
     value: bt.name,
   })),
 )
-
-const columns = [
-  { accessorKey: 'icon', header: '' },
-  { accessorKey: 'displayName', header: 'Display Name' },
-  { accessorKey: 'name', header: 'API Name' },
-  { accessorKey: 'areaCount', header: 'Areas' },
-  { accessorKey: 'status', header: 'Status' },
-  { id: 'actions', header: '' },
-]
 
 function resetForm() {
   form.value = {
@@ -152,12 +152,12 @@ function openEditAreaModal(areaName: string, area: AreaConfig) {
 
 function saveArea() {
   if (!areaForm.value.name.trim() || !areaForm.value.displayName.trim()) {
-    toast.add({ title: 'Area name and display name are required', color: 'error' })
+    toast({ title: 'Area name and display name are required', variant: 'destructive' })
     return
   }
 
   if (areaForm.value.allowedBlocks.length === 0) {
-    toast.add({ title: 'Select at least one allowed block type', color: 'error' })
+    toast({ title: 'Select at least one allowed block type', variant: 'destructive' })
     return
   }
 
@@ -176,7 +176,7 @@ function saveArea() {
 
   form.value.areas[areaForm.value.name] = areaConfig
   showAreaModal.value = false
-  toast.add({ title: editingAreaName.value ? 'Area updated' : 'Area added', color: 'success' })
+  toast({ title: editingAreaName.value ? 'Area updated' : 'Area added' })
 }
 
 function deleteArea(areaName: string) {
@@ -191,19 +191,18 @@ function getAreaCount(areas: Record<string, any> | undefined): number {
 function getRows() {
   return pageTypes.value.map(pt => ({
     ...pt,
-    icon: pt.icon || 'i-heroicons-document-duplicate',
     areaCount: getAreaCount(pt.areas),
   }))
 }
 
 async function createPageType() {
   if (!form.value.displayName.trim() || !form.value.name.trim()) {
-    toast.add({ title: 'Name and display name are required', color: 'error' })
+    toast({ title: 'Name and display name are required', variant: 'destructive' })
     return
   }
 
   if (Object.keys(form.value.areas).length === 0) {
-    toast.add({ title: 'At least one area is required', color: 'error' })
+    toast({ title: 'At least one area is required', variant: 'destructive' })
     return
   }
 
@@ -224,11 +223,11 @@ async function createPageType() {
 
     await refresh()
     showCreateModal.value = false
-    toast.add({ title: 'Page type created', color: 'success' })
+    toast({ title: 'Page type created' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to create page type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -255,11 +254,11 @@ async function updatePageType() {
 
     await refresh()
     showEditModal.value = false
-    toast.add({ title: 'Page type updated', color: 'success' })
+    toast({ title: 'Page type updated' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to update page type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -279,11 +278,11 @@ async function deletePageType() {
   try {
     await $fetch(`/api/publisher/page-types/${selectedPageType.value.name}`, { method: 'DELETE' })
     await refresh()
-    toast.add({ title: 'Page type deleted', color: 'success' })
+    toast({ title: 'Page type deleted' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to delete page type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isDeleting.value = false
@@ -312,397 +311,406 @@ function slugify(str: string): string {
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Page Types</h2>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
+        <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">Page Types</h2>
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">
           Page templates with configurable areas for blocks
         </p>
       </div>
-      <UButton icon="i-heroicons-plus" color="neutral" @click="openCreateModal">
+      <Button variant="outline" @click="openCreateModal">
+        <Plus class="h-4 w-4 mr-2" />
         Create Page Type
-      </UButton>
+      </Button>
     </div>
 
     <!-- Table -->
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable
-        :data="getRows()"
-        :columns="columns"
-        :loading="status === 'pending'"
-      >
-        <template #icon-cell="{ row }">
-          <UIcon :name="row.original.icon" class="text-lg text-stone-500 dark:text-stone-400" />
-        </template>
-
-        <template #displayName-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <button
-              @click="openEditModal(row.original)"
-              class="font-medium text-stone-900 dark:text-stone-100 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              {{ row.original.displayName }}
-            </button>
-            <UBadge v-if="row.original.isSystem" color="info" variant="subtle" size="xs">
-              System
-            </UBadge>
-          </div>
-        </template>
-
-        <template #name-cell="{ row }">
-          <code class="text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
-            {{ row.original.name }}
-          </code>
-        </template>
-
-        <template #areaCount-cell="{ row }">
-          <span class="text-sm text-stone-600 dark:text-stone-400">
-            {{ row.original.areaCount }} areas
-          </span>
-        </template>
-
-        <template #status-cell="{ row }">
-          <UBadge
-            v-if="row.original.active === false"
-            color="error"
-            variant="subtle"
-            size="xs"
-          >
-            Disabled
-          </UBadge>
-          <UBadge v-else color="success" variant="subtle" size="xs">
-            Active
-          </UBadge>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-pencil"
-              @click="openEditModal(row.original)"
-            />
-            <UButton
-              v-if="!row.original.isSystem"
-              size="xs"
-              variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
-              @click="openDeleteModal(row.original)"
-            />
-          </div>
-        </template>
-      </UTable>
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="w-[40px]"></TableHead>
+            <TableHead>Display Name</TableHead>
+            <TableHead>API Name</TableHead>
+            <TableHead>Areas</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead class="w-[100px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="status === 'pending'">
+            <TableCell colspan="6" class="text-center py-8 text-[hsl(var(--muted-foreground))]">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-for="pt in getRows()" :key="pt.name">
+            <TableCell>
+              <Copy class="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="openEditModal(pt)"
+                  class="font-medium text-[hsl(var(--foreground))] hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  {{ pt.displayName }}
+                </button>
+                <Badge v-if="pt.isSystem" variant="secondary" class="text-xs">
+                  System
+                </Badge>
+              </div>
+            </TableCell>
+            <TableCell>
+              <code class="text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
+                {{ pt.name }}
+              </code>
+            </TableCell>
+            <TableCell class="text-sm text-[hsl(var(--muted-foreground))]">
+              {{ pt.areaCount }} areas
+            </TableCell>
+            <TableCell>
+              <Badge
+                v-if="pt.active === false"
+                variant="destructive"
+                class="text-xs"
+              >
+                Disabled
+              </Badge>
+              <Badge v-else variant="default" class="text-xs">
+                Active
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-1">
+                <Button size="sm" variant="ghost" @click="openEditModal(pt)">
+                  <Pencil class="h-4 w-4" />
+                </Button>
+                <Button
+                  v-if="!pt.isSystem"
+                  size="sm"
+                  variant="ghost"
+                  @click="openDeleteModal(pt)"
+                >
+                  <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
 
       <!-- Empty state -->
       <div v-if="pageTypes.length === 0 && status !== 'pending'" class="text-center py-12">
-        <UIcon name="i-heroicons-document-duplicate" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400">No page types defined.</p>
-        <UButton
-          variant="soft"
-          color="neutral"
-          icon="i-heroicons-plus"
+        <Copy class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">No page types defined.</p>
+        <Button
+          variant="outline"
           class="mt-4"
           @click="openCreateModal"
         >
+          <Plus class="h-4 w-4 mr-2" />
           Create your first page type
-        </UButton>
+        </Button>
       </div>
     </div>
 
     <!-- Create Modal -->
-    <UModal v-model:open="showCreateModal">
-      <template #content>
-        <div class="p-6 max-h-[85vh] overflow-y-auto">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create Page Type</h3>
+    <Dialog v-model:open="showCreateModal">
+      <DialogContent class="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Page Type</DialogTitle>
+        </DialogHeader>
 
-          <form @submit.prevent="createPageType" class="space-y-4">
+        <form @submit.prevent="createPageType" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.displayName" placeholder="e.g., Landing Page" />
+            </div>
+
+            <div class="space-y-2">
+              <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.name" placeholder="e.g., landing-page" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Icon</Label>
+              <Input v-model="form.icon" placeholder="e.g., File" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Description</Label>
+            <Textarea v-model="form.description" placeholder="What is this page type for?" :rows="3" />
+          </div>
+
+          <!-- Options -->
+          <div class="border-t border-[hsl(var(--border))] pt-4">
+            <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Options</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput v-model="form.displayName" placeholder="e.g., Landing Page" />
-              </UFormField>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="form.options.draftAndPublish"
+                  class="rounded border-[hsl(var(--border))]"
+                />
+                <span class="text-sm text-[hsl(var(--foreground))]">Draft & Publish</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="form.options.seo"
+                  class="rounded border-[hsl(var(--border))]"
+                />
+                <span class="text-sm text-[hsl(var(--foreground))]">SEO Fields</span>
+              </label>
+            </div>
+          </div>
 
-              <UFormField label="API Name" required>
-                <UInput v-model="form.name" placeholder="e.g., landing-page" />
-              </UFormField>
+          <!-- Areas -->
+          <div class="border-t border-[hsl(var(--border))] pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-[hsl(var(--foreground))]">Areas</h4>
+              <Button size="sm" variant="outline" @click="openAddAreaModal">
+                <Plus class="h-3 w-3 mr-1" />
+                Add Area
+              </Button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Icon">
-                <UInput v-model="form.icon" placeholder="e.g., i-heroicons-document" />
-              </UFormField>
-            </div>
-
-            <UFormField label="Description">
-              <UTextarea v-model="form.description" placeholder="What is this page type for?" :rows="3" />
-            </UFormField>
-
-            <!-- Options -->
-            <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
-              <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Options</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.options.draftAndPublish"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">Draft & Publish</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.options.seo"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">SEO Fields</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Areas -->
-            <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100">Areas</h4>
-                <UButton size="xs" variant="outline" color="neutral" icon="i-heroicons-plus" @click="openAddAreaModal">
-                  Add Area
-                </UButton>
-              </div>
-
-              <div v-if="Object.keys(form.areas).length > 0" class="space-y-2">
-                <div
-                  v-for="(area, name) in form.areas"
-                  :key="name"
-                  class="flex items-center justify-between p-3 border border-stone-200 dark:border-stone-700 rounded-lg"
-                >
-                  <div>
-                    <span class="font-medium text-stone-900 dark:text-stone-100">{{ area.displayName }}</span>
-                    <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1.5 py-0.5 rounded">
-                      {{ name }}
-                    </code>
-                    <span class="text-xs text-stone-500 dark:text-stone-400 ml-2">
-                      {{ area.allowedBlocks.length }} blocks allowed
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      color="neutral"
-                      icon="i-heroicons-pencil"
-                      @click="openEditAreaModal(name as string, area)"
-                    />
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      color="error"
-                      icon="i-heroicons-trash"
-                      @click="deleteArea(name as string)"
-                    />
-                  </div>
+            <div v-if="Object.keys(form.areas).length > 0" class="space-y-2">
+              <div
+                v-for="(area, name) in form.areas"
+                :key="name"
+                class="flex items-center justify-between p-3 border border-[hsl(var(--border))] rounded-lg"
+              >
+                <div>
+                  <span class="font-medium text-[hsl(var(--foreground))]">{{ area.displayName }}</span>
+                  <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded">
+                    {{ name }}
+                  </code>
+                  <span class="text-xs text-[hsl(var(--muted-foreground))] ml-2">
+                    {{ area.allowedBlocks.length }} blocks allowed
+                  </span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" @click="openEditAreaModal(name as string, area)">
+                    <Pencil class="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" @click="deleteArea(name as string)">
+                    <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                  </Button>
                 </div>
               </div>
-              <div v-else class="text-center py-4 border border-dashed border-stone-300 dark:border-stone-700 rounded-lg">
-                <p class="text-sm text-stone-500 dark:text-stone-400">No areas defined yet</p>
-              </div>
             </div>
+            <div v-else class="text-center py-4 border border-dashed border-[hsl(var(--border))] rounded-lg">
+              <p class="text-sm text-[hsl(var(--muted-foreground))]">No areas defined yet</p>
+            </div>
+          </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <UButton variant="ghost" color="neutral" @click="showCreateModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Create</UButton>
-            </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          <DialogFooter>
+            <Button variant="ghost" @click="showCreateModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Create
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Edit Modal -->
-    <UModal v-model:open="showEditModal">
-      <template #content>
-        <div class="p-6 max-h-[85vh] overflow-y-auto">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit Page Type</h3>
+    <Dialog v-model:open="showEditModal">
+      <DialogContent class="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Page Type</DialogTitle>
+        </DialogHeader>
 
-          <form @submit.prevent="updatePageType" class="space-y-4">
+        <form @submit.prevent="updatePageType" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.displayName" placeholder="e.g., Landing Page" />
+            </div>
+
+            <div class="space-y-2">
+              <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.name" placeholder="e.g., landing-page" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Icon</Label>
+              <Input v-model="form.icon" placeholder="e.g., File" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Description</Label>
+            <Textarea v-model="form.description" placeholder="What is this page type for?" :rows="3" />
+          </div>
+
+          <!-- Options -->
+          <div class="border-t border-[hsl(var(--border))] pt-4">
+            <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Options</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput v-model="form.displayName" placeholder="e.g., Landing Page" />
-              </UFormField>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="form.options.draftAndPublish"
+                  class="rounded border-[hsl(var(--border))]"
+                />
+                <span class="text-sm text-[hsl(var(--foreground))]">Draft & Publish</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="form.options.seo"
+                  class="rounded border-[hsl(var(--border))]"
+                />
+                <span class="text-sm text-[hsl(var(--foreground))]">SEO Fields</span>
+              </label>
+            </div>
+          </div>
 
-              <UFormField label="API Name" required>
-                <UInput v-model="form.name" placeholder="e.g., landing-page" />
-              </UFormField>
+          <!-- Areas -->
+          <div class="border-t border-[hsl(var(--border))] pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-[hsl(var(--foreground))]">Areas</h4>
+              <Button size="sm" variant="outline" @click="openAddAreaModal">
+                <Plus class="h-3 w-3 mr-1" />
+                Add Area
+              </Button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Icon">
-                <UInput v-model="form.icon" placeholder="e.g., i-heroicons-document" />
-              </UFormField>
-            </div>
-
-            <UFormField label="Description">
-              <UTextarea v-model="form.description" placeholder="What is this page type for?" :rows="3" />
-            </UFormField>
-
-            <!-- Options -->
-            <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
-              <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Options</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.options.draftAndPublish"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">Draft & Publish</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.options.seo"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">SEO Fields</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Areas -->
-            <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100">Areas</h4>
-                <UButton size="xs" variant="outline" color="neutral" icon="i-heroicons-plus" @click="openAddAreaModal">
-                  Add Area
-                </UButton>
-              </div>
-
-              <div v-if="Object.keys(form.areas).length > 0" class="space-y-2">
-                <div
-                  v-for="(area, name) in form.areas"
-                  :key="name"
-                  class="flex items-center justify-between p-3 border border-stone-200 dark:border-stone-700 rounded-lg"
-                >
-                  <div>
-                    <span class="font-medium text-stone-900 dark:text-stone-100">{{ area.displayName }}</span>
-                    <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 px-1.5 py-0.5 rounded">
-                      {{ name }}
-                    </code>
-                    <span class="text-xs text-stone-500 dark:text-stone-400 ml-2">
-                      {{ area.allowedBlocks.length }} blocks allowed
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      color="neutral"
-                      icon="i-heroicons-pencil"
-                      @click="openEditAreaModal(name as string, area)"
-                    />
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      color="error"
-                      icon="i-heroicons-trash"
-                      @click="deleteArea(name as string)"
-                    />
-                  </div>
+            <div v-if="Object.keys(form.areas).length > 0" class="space-y-2">
+              <div
+                v-for="(area, name) in form.areas"
+                :key="name"
+                class="flex items-center justify-between p-3 border border-[hsl(var(--border))] rounded-lg"
+              >
+                <div>
+                  <span class="font-medium text-[hsl(var(--foreground))]">{{ area.displayName }}</span>
+                  <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded">
+                    {{ name }}
+                  </code>
+                  <span class="text-xs text-[hsl(var(--muted-foreground))] ml-2">
+                    {{ area.allowedBlocks.length }} blocks allowed
+                  </span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" @click="openEditAreaModal(name as string, area)">
+                    <Pencil class="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" @click="deleteArea(name as string)">
+                    <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                  </Button>
                 </div>
               </div>
-              <div v-else class="text-center py-4 border border-dashed border-stone-300 dark:border-stone-700 rounded-lg">
-                <p class="text-sm text-stone-500 dark:text-stone-400">No areas defined yet</p>
-              </div>
             </div>
+            <div v-else class="text-center py-4 border border-dashed border-[hsl(var(--border))] rounded-lg">
+              <p class="text-sm text-[hsl(var(--muted-foreground))]">No areas defined yet</p>
+            </div>
+          </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <UButton variant="ghost" color="neutral" @click="showEditModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Save</UButton>
-            </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          <DialogFooter>
+            <Button variant="ghost" @click="showEditModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Area Modal -->
-    <UModal v-model:open="showAreaModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
-            {{ editingAreaName ? 'Edit Area' : 'Add Area' }}
-          </h3>
+    <Dialog v-model:open="showAreaModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{{ editingAreaName ? 'Edit Area' : 'Add Area' }}</DialogTitle>
+        </DialogHeader>
 
-          <form @submit.prevent="saveArea" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput v-model="areaForm.displayName" placeholder="e.g., Main Content" />
-              </UFormField>
+        <form @submit.prevent="saveArea" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="areaForm.displayName" placeholder="e.g., Main Content" />
+            </div>
 
-              <UFormField label="API Name" required>
-                <UInput
-                  v-model="areaForm.name"
-                  placeholder="e.g., main"
-                  :disabled="!!editingAreaName"
+            <div class="space-y-2">
+              <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input
+                v-model="areaForm.name"
+                placeholder="e.g., main"
+                :disabled="!!editingAreaName"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Allowed Block Types <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <div class="space-y-2 max-h-40 overflow-y-auto border border-[hsl(var(--border))] rounded-md p-3">
+              <label
+                v-for="bt in blockTypes"
+                :key="bt.name"
+                class="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="areaForm.allowedBlocks.includes(bt.name)"
+                  class="rounded border-[hsl(var(--border))]"
+                  @change="(e: Event) => {
+                    const checked = (e.target as HTMLInputElement).checked
+                    if (checked) areaForm.allowedBlocks.push(bt.name)
+                    else areaForm.allowedBlocks = areaForm.allowedBlocks.filter((n: string) => n !== bt.name)
+                  }"
                 />
-              </UFormField>
+                <span class="text-sm text-[hsl(var(--foreground))]">{{ bt.displayName }}</span>
+                <code class="text-xs text-[hsl(var(--muted-foreground))]">{{ bt.name }}</code>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Min Blocks</Label>
+              <Input v-model.number="areaForm.minBlocks" type="number" min="0" />
+              <p class="text-xs text-[hsl(var(--muted-foreground))]">Minimum blocks required</p>
             </div>
 
-            <UFormField label="Allowed Block Types" required>
-              <div class="space-y-2 max-h-40 overflow-y-auto border border-stone-200 dark:border-stone-700 rounded-md p-3">
-                <label
-                  v-for="bt in blockTypes"
-                  :key="bt.name"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="areaForm.allowedBlocks.includes(bt.name)"
-                    class="rounded border-stone-300 dark:border-stone-600"
-                    @change="(e: Event) => {
-                      const checked = (e.target as HTMLInputElement).checked
-                      if (checked) areaForm.allowedBlocks.push(bt.name)
-                      else areaForm.allowedBlocks = areaForm.allowedBlocks.filter((n: string) => n !== bt.name)
-                    }"
-                  />
-                  <span class="text-sm text-stone-700 dark:text-stone-300">{{ bt.displayName }}</span>
-                  <code class="text-xs text-stone-400 dark:text-stone-500">{{ bt.name }}</code>
-                </label>
-              </div>
-            </UFormField>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Min Blocks" hint="Minimum blocks required">
-                <UInput v-model.number="areaForm.minBlocks" type="number" min="0" />
-              </UFormField>
-
-              <UFormField label="Max Blocks" hint="Maximum blocks allowed">
-                <UInput v-model.number="areaForm.maxBlocks" type="number" min="1" />
-              </UFormField>
+            <div class="space-y-2">
+              <Label>Max Blocks</Label>
+              <Input v-model.number="areaForm.maxBlocks" type="number" min="1" />
+              <p class="text-xs text-[hsl(var(--muted-foreground))]">Maximum blocks allowed</p>
             </div>
+          </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <UButton variant="ghost" color="neutral" @click="showAreaModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral">
-                {{ editingAreaName ? 'Update' : 'Add' }} Area
-              </UButton>
-            </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          <DialogFooter>
+            <Button variant="ghost" @click="showAreaModal = false">Cancel</Button>
+            <Button type="submit">
+              {{ editingAreaName ? 'Update' : 'Add' }} Area
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Delete confirmation -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">Delete Page Type</h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete <span class="font-medium text-stone-700 dark:text-stone-300">{{ selectedPageType?.displayName }}</span>?
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">Cancel</UButton>
-            <UButton color="error" :loading="isDeleting" @click="deletePageType">Delete</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Page Type</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete <span class="font-medium text-[hsl(var(--foreground))]">{{ selectedPageType?.displayName }}</span>?
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">Cancel</Button>
+          <Button variant="destructive" :disabled="isDeleting" @click="deletePageType">
+            <Loader2 v-if="isDeleting" class="h-4 w-4 mr-2 animate-spin" />
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

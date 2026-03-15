@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MediaItem } from '~~/lib/publisher-admin/types/media'
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@spavn/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'publisher-admin' })
 
@@ -33,7 +34,7 @@ const onBulkDelete = () => handleBulkDelete(selectedIds.value, clearSelection, p
 <template>
   <div class="flex gap-6">
     <aside class="w-64 flex-shrink-0">
-      <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-3">
+      <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3">
         <PublisherFolderTree :folders="folders" :active-folder-id="activeFolderId" :loading="foldersStatus === 'pending'" root-name="Media Library"
           @select="selectFolder" @create="onCreateFolder" @rename="onRenameFolder" @move="onMoveFolder" @delete="onDeleteFolder" />
       </div>
@@ -51,7 +52,19 @@ const onBulkDelete = () => handleBulkDelete(selectedIds.value, clearSelection, p
         @select="selectMedia" @toggle-selection="toggleSelection" @toggle-select-all="toggleSelectAll(media)" @upload="triggerUpload" />
 
       <div v-if="pagination.pageCount > 1" class="flex justify-center mt-6">
-        <UPagination v-model="page" :total="pagination.total" :items-per-page="pageSize" />
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious :disabled="page <= 1" @click="page = Math.max(1, page - 1)" />
+            </PaginationItem>
+            <PaginationItem>
+              <span class="text-sm text-[hsl(var(--muted-foreground))] px-3">Page {{ page }} of {{ pagination.pageCount }}</span>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext :disabled="page >= pagination.pageCount" @click="page = Math.min(pagination.pageCount, page + 1)" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       <PublisherMediaBulkActionBar :selected-count="selectedCount" :is-bulk-operating="isBulkOperating"

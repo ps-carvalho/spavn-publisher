@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import type { MenuItemType } from '~/lib/publisher/types'
+import { ArrowLeft, RefreshCw, AlertTriangle, Plus, Menu, ChevronRight } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Alert, AlertTitle, AlertDescription } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
 })
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// --- Types ---
 
 interface MenuItem {
   id: number
@@ -37,11 +42,11 @@ interface MenuApiResponse {
   items: MenuItem[]
 }
 
-// ─── Route & State ─────────────────────────────────────────────────────────────
+// --- Route & State ---
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { toast } = useToast()
 const menuId = computed(() => route.params.id as string)
 
 // Modal states
@@ -52,7 +57,7 @@ const deleteTarget = ref<MenuItem | null>(null)
 const parentItemForNew = ref<MenuItem | null>(null)
 const isSubmitting = ref(false)
 
-// ─── Fetch Menu Data ────────────────────────────────────────────────────────────
+// --- Fetch Menu Data ---
 
 const { data: menuData, refresh, status, error } = await useFetch<{ data: MenuApiResponse }>(computed(() => `/api/publisher/menus/${menuId.value}`))
 
@@ -99,21 +104,21 @@ watch(() => menuData.value?.data?.items, (newItems) => {
   menuItems.value = buildMenuTree(newItems || [])
 }, { immediate: true })
 
-// ─── Location Badge Colors ──────────────────────────────────────────────────────
+// --- Location Badge Colors ---
 
 function getLocationClass(location: string | null): string {
-  if (!location) return 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400'
+  if (!location) return 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
 
   const colors: Record<string, string> = {
-    header: 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300',
-    footer: 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300',
-    sidebar: 'bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300',
-    main: 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300',
+    header: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
+    footer: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
+    sidebar: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
+    main: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
   }
-  return colors[location] || 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400'
+  return colors[location] || 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
 }
 
-// ─── Form Modal Handlers ───────────────────────────────────────────────────────
+// --- Form Modal Handlers ---
 
 function openCreateModal(parentItem?: MenuItem) {
   editingItem.value = null
@@ -133,7 +138,7 @@ function closeFormModal() {
   parentItemForNew.value = null
 }
 
-// ─── Delete Modal Handlers ─────────────────────────────────────────────────────
+// --- Delete Modal Handlers ---
 
 function openDeleteModal(item: MenuItem) {
   deleteTarget.value = item
@@ -145,7 +150,7 @@ function closeDeleteModal() {
   deleteTarget.value = null
 }
 
-// ─── CRUD Operations ────────────────────────────────────────────────────────────
+// --- CRUD Operations ---
 
 async function handleFormSubmit(payload: Record<string, unknown>) {
   isSubmitting.value = true
@@ -162,7 +167,7 @@ async function handleFormSubmit(payload: Record<string, unknown>) {
         method: 'PUT',
         body: payload,
       })
-      toast.add({ title: 'Menu item updated', color: 'success' })
+      toast({ title: 'Menu item updated' })
     }
     else {
       // Create new item
@@ -170,7 +175,7 @@ async function handleFormSubmit(payload: Record<string, unknown>) {
         method: 'POST',
         body: payload,
       })
-      toast.add({ title: 'Menu item created', color: 'success' })
+      toast({ title: 'Menu item created' })
     }
 
     closeFormModal()
@@ -178,9 +183,9 @@ async function handleFormSubmit(payload: Record<string, unknown>) {
   }
   catch (e: unknown) {
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({
+    toast({
       title: err?.data?.data?.error?.message || 'Failed to save menu item',
-      color: 'error',
+      variant: 'destructive',
     })
   }
   finally {
@@ -197,15 +202,15 @@ async function deleteItem() {
     await $fetch(`/api/publisher/menus/${menuId.value}/items/${deleteTarget.value.id}`, {
       method: 'DELETE',
     })
-    toast.add({ title: 'Menu item deleted', color: 'success' })
+    toast({ title: 'Menu item deleted' })
     closeDeleteModal()
     await refresh()
   }
   catch (e: unknown) {
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({
+    toast({
       title: err?.data?.data?.error?.message || 'Failed to delete menu item',
-      color: 'error',
+      variant: 'destructive',
     })
   }
   finally {
@@ -213,7 +218,7 @@ async function deleteItem() {
   }
 }
 
-// ─── Event Handlers from MenuItemRenderer ──────────────────────────────────────
+// --- Event Handlers from MenuItemRenderer ---
 
 function handleItemEdit(item: MenuItem) {
   openEditModal(item)
@@ -240,19 +245,19 @@ async function handleReorder(orderedIds: number[]) {
     })
 
     await refresh()
-    toast.add({ title: 'Menu items reordered', color: 'success' })
+    toast({ title: 'Menu items reordered' })
   } catch (e: unknown) {
     // Revert to server state on error
     menuItems.value = buildMenuTree(menuData.value?.data?.items || [])
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({
+    toast({
       title: err?.data?.data?.error?.message || 'Failed to reorder items',
-      color: 'error',
+      variant: 'destructive',
     })
   }
 }
 
-// ─── Helper Functions ──────────────────────────────────────────────────────────
+// --- Helper Functions ---
 
 function findItemById(items: MenuItem[], id: number): MenuItem | null {
   for (const item of items) {
@@ -265,7 +270,7 @@ function findItemById(items: MenuItem[], id: number): MenuItem | null {
   return null
 }
 
-// ─── Navigation ────────────────────────────────────────────────────────────────
+// --- Navigation ---
 
 function goBack() {
   router.push('/admin/menus')
@@ -277,44 +282,44 @@ function goBack() {
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center py-20">
       <div class="text-center">
-        <UIcon name="i-heroicons-arrow-path" class="text-3xl animate-spin text-stone-400 dark:text-stone-500 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400">Loading menu...</p>
+        <RefreshCw class="h-8 w-8 animate-spin text-[hsl(var(--muted-foreground))] mx-auto mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">Loading menu...</p>
       </div>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error || !menu" class="flex items-center justify-center py-20">
       <div class="text-center">
-        <UIcon name="i-heroicons-exclamation-triangle" class="text-3xl text-red-500 dark:text-red-400 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400 mb-4">
+        <AlertTriangle class="h-8 w-8 text-[hsl(var(--destructive))] mx-auto mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))] mb-4">
           {{ error?.message || 'Menu not found' }}
         </p>
-        <UButton color="neutral" @click="goBack">
+        <Button variant="outline" @click="goBack">
           Back to Menus
-        </UButton>
+        </Button>
       </div>
     </div>
 
     <!-- Main Content -->
     <template v-else>
       <!-- Breadcrumb -->
-      <div class="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400 mb-4">
-        <NuxtLink to="/admin" class="hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
+      <div class="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] mb-4">
+        <NuxtLink to="/admin" class="hover:text-[hsl(var(--foreground))] transition-colors">
           Admin
         </NuxtLink>
-        <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
-        <NuxtLink to="/admin/menus" class="hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
+        <ChevronRight class="w-4 h-4" />
+        <NuxtLink to="/admin/menus" class="hover:text-[hsl(var(--foreground))] transition-colors">
           Menus
         </NuxtLink>
-        <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
-        <span class="text-stone-700 dark:text-stone-300 font-medium">{{ menu.name }}</span>
+        <ChevronRight class="w-4 h-4" />
+        <span class="text-[hsl(var(--foreground))] font-medium">{{ menu.name }}</span>
       </div>
 
       <!-- Header Section -->
       <div class="flex items-start justify-between mb-6">
         <div>
           <div class="flex items-center gap-3 mb-2">
-            <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+            <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
               {{ menu.name }}
             </h2>
             <span
@@ -325,41 +330,34 @@ function goBack() {
               {{ menu.location }}
             </span>
           </div>
-          <p v-if="menu.description" class="text-sm text-stone-500 dark:text-stone-400">
+          <p v-if="menu.description" class="text-sm text-[hsl(var(--muted-foreground))]">
             {{ menu.description }}
           </p>
-          <div class="flex items-center gap-4 mt-2 text-xs text-stone-400 dark:text-stone-500">
-            <span>Slug: <code class="bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">{{ menu.slug }}</code></span>
+          <div class="flex items-center gap-4 mt-2 text-xs text-[hsl(var(--muted-foreground))]">
+            <span>Slug: <code class="bg-[hsl(var(--muted))] px-1.5 py-0.5 rounded font-mono">{{ menu.slug }}</code></span>
             <span>{{ menuItems.length }} {{ menuItems.length === 1 ? 'item' : 'items' }}</span>
           </div>
         </div>
 
-        <UButton
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-left"
-          @click="goBack"
-        >
+        <Button variant="ghost" @click="goBack">
+          <ArrowLeft class="h-4 w-4 mr-2" />
           Back to Menus
-        </UButton>
+        </Button>
       </div>
 
       <!-- Actions Bar -->
-      <div class="flex items-center justify-between mb-4 pb-4 border-b border-stone-200 dark:border-stone-800">
-        <p class="text-sm text-stone-500 dark:text-stone-400">
+      <div class="flex items-center justify-between mb-4 pb-4 border-b border-[hsl(var(--border))]">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
           Manage the items in this menu. Drag to reorder items.
         </p>
-        <UButton
-          icon="i-heroicons-plus"
-          color="neutral"
-          @click="openCreateModal()"
-        >
+        <Button variant="outline" @click="openCreateModal()">
+          <Plus class="h-4 w-4 mr-2" />
           Add Menu Item
-        </UButton>
+        </Button>
       </div>
 
       <!-- Menu Items List -->
-      <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-hidden">
+      <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden">
         <!-- Items rendered using MenuItemRenderer -->
         <template v-if="menuItems.length > 0">
           <ClientOnly>
@@ -381,7 +379,7 @@ function goBack() {
               />
             </PublisherSortableArea>
             <template #fallback>
-              <div class="divide-y divide-stone-100 dark:divide-stone-800">
+              <div class="divide-y divide-[hsl(var(--border))]">
                 <PublisherMenuItemRenderer
                   v-for="item in menuItems"
                   :key="item.id"
@@ -398,98 +396,85 @@ function goBack() {
 
         <!-- Empty State -->
         <div v-else class="text-center py-12">
-          <UIcon name="i-heroicons-bars-3" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-          <p class="text-stone-500 dark:text-stone-400">No menu items yet.</p>
-          <p class="text-sm text-stone-400 dark:text-stone-500 mt-1">Add your first menu item to get started.</p>
-          <UButton
-            variant="soft"
-            color="neutral"
-            icon="i-heroicons-plus"
+          <Menu class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+          <p class="text-[hsl(var(--muted-foreground))]">No menu items yet.</p>
+          <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">Add your first menu item to get started.</p>
+          <Button
+            variant="outline"
             class="mt-4"
             @click="openCreateModal()"
           >
+            <Plus class="h-4 w-4 mr-2" />
             Add First Item
-          </UButton>
+          </Button>
         </div>
       </div>
     </template>
 
     <!-- Menu Item Form Modal -->
-    <UModal v-model:open="isFormOpen" @close="closeFormModal">
-      <template #content>
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
-              {{ editingItem ? 'Edit Menu Item' : parentItemForNew ? `Add Child to "${parentItemForNew.label}"` : 'Add Menu Item' }}
-            </h3>
-          </div>
+    <Dialog v-model:open="isFormOpen" @close="closeFormModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {{ editingItem ? 'Edit Menu Item' : parentItemForNew ? `Add Child to "${parentItemForNew.label}"` : 'Add Menu Item' }}
+          </DialogTitle>
+        </DialogHeader>
 
-          <PublisherMenuItemForm
-            v-if="isFormOpen"
-            :menu-id="menu!.id"
-            :item="editingItem || undefined"
-            :on-submit="handleFormSubmit"
-            :on-cancel="closeFormModal"
-          />
-        </div>
-      </template>
-    </UModal>
+        <PublisherMenuItemForm
+          v-if="isFormOpen"
+          :menu-id="menu!.id"
+          :item="editingItem || undefined"
+          :on-submit="handleFormSubmit"
+          :on-cancel="closeFormModal"
+        />
+      </DialogContent>
+    </Dialog>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteModal" @close="closeDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <div class="flex items-start gap-3 mb-4">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 shrink-0">
-              <UIcon name="i-heroicons-exclamation-triangle" class="text-xl text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
-                Delete Menu Item
-              </h3>
-              <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
-                Are you sure you want to delete <span class="font-medium text-stone-700 dark:text-stone-300">{{ deleteTarget?.label }}</span>?
-              </p>
-            </div>
+    <Dialog v-model:open="showDeleteModal" @close="closeDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Menu Item</DialogTitle>
+        </DialogHeader>
+        <div class="flex items-start gap-3 mb-4">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-[hsl(var(--destructive))]/10 shrink-0">
+            <AlertTriangle class="h-5 w-5 text-[hsl(var(--destructive))]" />
           </div>
-
-          <UAlert
-            v-if="deleteTarget?.children && deleteTarget.children.length > 0"
-            color="warning"
-            variant="subtle"
-            icon="i-heroicons-exclamation-triangle"
-            class="mb-4"
-          >
-            <template #title>
-              This item has child items
-            </template>
-            <template #description>
-              All {{ deleteTarget.children.length }} child item(s) will also be deleted.
-            </template>
-          </UAlert>
-
-          <UAlert
-            v-else
-            color="warning"
-            variant="subtle"
-            icon="i-heroicons-exclamation-triangle"
-            class="mb-4"
-          >
-            <template #title>
-              This action cannot be undone
-            </template>
-          </UAlert>
-
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="closeDeleteModal">
-              Cancel
-            </UButton>
-            <UButton color="error" :loading="isSubmitting" @click="deleteItem">
-              Delete Item
-            </UButton>
-          </div>
+          <p class="text-sm text-[hsl(var(--muted-foreground))]">
+            Are you sure you want to delete <span class="font-medium text-[hsl(var(--foreground))]">{{ deleteTarget?.label }}</span>?
+          </p>
         </div>
-      </template>
-    </UModal>
+
+        <Alert
+          v-if="deleteTarget?.children && deleteTarget.children.length > 0"
+          variant="destructive"
+          class="mb-4"
+        >
+          <AlertTriangle class="h-4 w-4" />
+          <AlertTitle>This item has child items</AlertTitle>
+          <AlertDescription>
+            All {{ deleteTarget.children.length }} child item(s) will also be deleted.
+          </AlertDescription>
+        </Alert>
+
+        <Alert
+          v-else
+          variant="destructive"
+          class="mb-4"
+        >
+          <AlertTriangle class="h-4 w-4" />
+          <AlertTitle>This action cannot be undone</AlertTitle>
+        </Alert>
+
+        <DialogFooter>
+          <Button variant="ghost" @click="closeDeleteModal">
+            Cancel
+          </Button>
+          <Button variant="destructive" :disabled="isSubmitting" @click="deleteItem">
+            Delete Item
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

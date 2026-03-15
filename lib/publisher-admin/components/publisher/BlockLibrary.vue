@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { BlockTypeConfig, PageTypeConfig } from '~~/lib/publisher/types'
+import { Input } from '@spavn/ui'
+import { Info, ChevronDown, ChevronRight, Box, Search } from 'lucide-vue-next'
 
 const props = defineProps<{
   blockTypes: BlockTypeConfig[]
@@ -117,36 +119,34 @@ const hasVisibleBlocks = computed(() => {
 </script>
 
 <template>
-  <div class="w-60 border-r border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex flex-col">
+  <div class="w-60 border-r border-[hsl(var(--border))] bg-[hsl(var(--card))] flex flex-col">
     <!-- Header -->
-    <div class="p-4 border-b border-stone-200 dark:border-stone-800">
-      <h3 class="text-sm font-semibold text-stone-900 dark:text-stone-100">
+    <div class="p-4 border-b border-[hsl(var(--border))]">
+      <h3 class="text-sm font-semibold text-[hsl(var(--foreground))]">
         Block Library
       </h3>
-      <p v-if="selectedArea" class="text-xs text-stone-500 dark:text-stone-400 mt-1">
+      <p v-if="selectedArea" class="text-xs text-[hsl(var(--muted-foreground))] mt-1">
         Adding to: {{ pageType?.areas[selectedArea]?.displayName || selectedArea }}
       </p>
     </div>
 
     <!-- Search -->
-    <div class="p-3 border-b border-stone-200 dark:border-stone-800">
-      <UInput
+    <div class="p-3 border-b border-[hsl(var(--border))]">
+      <Input
         v-model="searchQuery"
         placeholder="Search blocks..."
-        icon="i-heroicons-magnifying-glass"
-        size="sm"
       />
     </div>
 
     <!-- No area selected message -->
-    <div v-if="!selectedArea" class="p-4 m-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+    <div v-if="!selectedArea" class="p-4 m-3 rounded-lg bg-[hsl(var(--accent))] border border-[hsl(var(--border))]">
       <div class="flex items-start gap-2">
-        <UIcon name="i-heroicons-information-circle" class="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0" />
+        <Info class="w-4 h-4 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
         <div>
-          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+          <p class="text-sm font-medium text-[hsl(var(--foreground))]">
             Select an area
           </p>
-          <p class="text-xs text-amber-600 dark:text-amber-300 mt-1">
+          <p class="text-xs text-[hsl(var(--muted-foreground))] mt-1">
             Click an area in the canvas to add blocks
           </p>
         </div>
@@ -164,17 +164,21 @@ const hasVisibleBlocks = computed(() => {
         <!-- Category header -->
         <button
           type="button"
-          class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
           @click="toggleCategory(category)"
         >
-          <UIcon
-            :name="expandedCategories.has(category) ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
-            class="text-stone-400 dark:text-stone-500 text-sm"
+          <ChevronDown
+            v-if="expandedCategories.has(category)"
+            class="w-4 h-4 text-[hsl(var(--muted-foreground))]"
           />
-          <span class="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+          <ChevronRight
+            v-else
+            class="w-4 h-4 text-[hsl(var(--muted-foreground))]"
+          />
+          <span class="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
             {{ formatCategoryLabel(category) }}
           </span>
-          <span class="text-xs text-stone-400 dark:text-stone-500 ml-auto">
+          <span class="text-xs text-[hsl(var(--muted-foreground))] ml-auto">
             {{ blocks.length }}
           </span>
         </button>
@@ -188,28 +192,21 @@ const hasVisibleBlocks = computed(() => {
             v-for="block in blocks"
             :key="block.name"
             type="button"
-            class="w-full text-left px-3 py-2 rounded-md border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 hover:bg-stone-100 dark:hover:bg-stone-700 hover:border-stone-300 dark:hover:border-stone-600 transition-colors group"
+            class="w-full text-left px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--accent))] hover:border-[hsl(var(--border))] transition-colors group"
             :title="block.description"
             @click="handleBlockClick(block.name)"
           >
             <div class="flex items-center gap-2">
-              <UIcon
-                v-if="block.icon"
-                :name="block.icon"
-                class="text-stone-400 dark:text-stone-500 group-hover:text-stone-600 dark:group-hover:text-stone-300"
+              <Box
+                class="w-4 h-4 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]"
               />
-              <UIcon
-                v-else
-                name="i-heroicons-cube"
-                class="text-stone-400 dark:text-stone-500 group-hover:text-stone-600 dark:group-hover:text-stone-300"
-              />
-              <span class="text-sm font-medium text-stone-700 dark:text-stone-300 group-hover:text-stone-900 dark:group-hover:text-stone-100">
+              <span class="text-sm font-medium text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--foreground))]">
                 {{ block.displayName }}
               </span>
             </div>
             <p
               v-if="block.description"
-              class="text-xs text-stone-400 dark:text-stone-500 mt-1 line-clamp-2"
+              class="text-xs text-[hsl(var(--muted-foreground))] mt-1 line-clamp-2"
             >
               {{ block.description }}
             </p>
@@ -219,14 +216,14 @@ const hasVisibleBlocks = computed(() => {
 
       <!-- Empty state - no blocks match search -->
       <div v-if="!hasVisibleBlocks && searchQuery" class="text-center py-8">
-        <UIcon name="i-heroicons-magnifying-glass" class="text-2xl text-stone-300 dark:text-stone-600 mb-2" />
-        <p class="text-sm text-stone-400 dark:text-stone-500">
+        <Search class="w-6 h-6 text-[hsl(var(--muted-foreground))] mx-auto mb-2" />
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
           No blocks match "{{ searchQuery }}"
         </p>
       </div>
 
       <!-- Empty state - no block types -->
-      <div v-if="!blockTypes.length" class="text-center py-8 text-stone-400 dark:text-stone-500 text-sm">
+      <div v-if="!blockTypes.length" class="text-center py-8 text-[hsl(var(--muted-foreground))] text-sm">
         No block types available
       </div>
     </div>

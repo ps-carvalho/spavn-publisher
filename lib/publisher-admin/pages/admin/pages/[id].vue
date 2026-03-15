@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ArrowLeft, RefreshCw, AlertTriangle, PenSquare, Eye, Settings, Loader2 } from 'lucide-vue-next'
+import { Button, Input, Textarea, Label, Separator, Sheet, SheetContent, SheetHeader, SheetTitle, useToast } from '@spavn/ui'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
@@ -112,6 +115,8 @@ const slugChanged = computed(() => {
   return seoForm.value.slug !== originalSlug.value
 })
 
+const { toast } = useToast()
+
 // Save SEO settings
 async function saveSeoSettings() {
   // Parse metaExtra if provided
@@ -121,7 +126,7 @@ async function saveSeoSettings() {
       metaExtraParsed = JSON.parse(seoForm.value.metaExtra)
     }
     catch {
-      useToast().add({ title: 'Invalid JSON', description: 'Meta Extra must be valid JSON', color: 'error' })
+      toast({ title: 'Invalid JSON', description: 'Meta Extra must be valid JSON', variant: 'destructive' })
       return
     }
   }
@@ -145,13 +150,13 @@ async function savePageTitle() {
 
 // Status badge classes
 function getStatusDotClass(status: string): string {
-  if (status === 'published') return 'bg-green-600 dark:bg-green-400'
-  return 'bg-amber-500 dark:bg-amber-400'
+  if (status === 'published') return 'bg-[hsl(var(--accent))]'
+  return 'bg-[hsl(var(--muted-foreground))]'
 }
 
 function getStatusTextClass(status: string): string {
-  if (status === 'published') return 'text-green-600 dark:text-green-400'
-  return 'text-amber-500 dark:text-amber-400'
+  if (status === 'published') return 'text-[hsl(var(--accent-foreground))]'
+  return 'text-[hsl(var(--muted-foreground))]'
 }
 
 // Format date
@@ -166,36 +171,35 @@ function formatDate(dateStr: unknown): string {
     <!-- Loading state -->
     <div v-if="isLoading" class="flex-1 flex items-center justify-center">
       <div class="text-center">
-        <UIcon name="i-heroicons-arrow-path" class="text-3xl animate-spin text-stone-400 dark:text-stone-500 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400">Loading page...</p>
+        <RefreshCw class="h-8 w-8 animate-spin text-[hsl(var(--muted-foreground))] mx-auto mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">Loading page...</p>
       </div>
     </div>
 
     <!-- Error state -->
     <div v-else-if="error" class="flex-1 flex items-center justify-center">
       <div class="text-center">
-        <UIcon name="i-heroicons-exclamation-triangle" class="text-3xl text-red-500 dark:text-red-400 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400 mb-4">{{ error.message }}</p>
-        <UButton color="neutral" @click="loadPage">
+        <AlertTriangle class="h-8 w-8 text-[hsl(var(--destructive))] mx-auto mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))] mb-4">{{ error.message }}</p>
+        <Button variant="outline" @click="loadPage">
           Try Again
-        </UButton>
+        </Button>
       </div>
     </div>
 
     <!-- Main editor -->
     <template v-else-if="page">
       <!-- Top bar -->
-      <div class="h-14 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex items-center px-4 gap-4">
+      <div class="h-14 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))] flex items-center px-4 gap-4">
         <!-- Back button -->
-        <UButton
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-left"
-          to="/admin/pages"
-        />
+        <Button variant="ghost" as-child>
+          <NuxtLink to="/admin/pages">
+            <ArrowLeft class="h-4 w-4" />
+          </NuxtLink>
+        </Button>
 
         <!-- Page title (editable) -->
-        <UInput
+        <Input
           v-model="pageTitle"
           placeholder="Page title"
           class="w-64"
@@ -218,65 +222,62 @@ function formatDate(dateStr: unknown): string {
         </div>
 
         <!-- Edit/Preview Toggle -->
-        <div class="flex items-center gap-1 p-1 bg-stone-100 dark:bg-stone-800 rounded-lg">
-          <UButton
-            :variant="mode === 'edit' ? 'solid' : 'ghost'"
-            size="xs"
-            icon="i-heroicons-pencil-square"
-            color="neutral"
+        <div class="flex items-center gap-1 p-1 bg-[hsl(var(--muted))] rounded-lg">
+          <Button
+            :variant="mode === 'edit' ? 'default' : 'ghost'"
+            size="sm"
             @click="mode = 'edit'"
           >
+            <PenSquare class="h-4 w-4 mr-1" />
             Edit
-          </UButton>
-          <UButton
-            :variant="mode === 'preview' ? 'solid' : 'ghost'"
-            size="xs"
-            icon="i-heroicons-eye"
-            color="neutral"
+          </Button>
+          <Button
+            :variant="mode === 'preview' ? 'default' : 'ghost'"
+            size="sm"
             @click="mode = 'preview'"
           >
+            <Eye class="h-4 w-4 mr-1" />
             Preview
-          </UButton>
+          </Button>
         </div>
 
         <!-- Spacer -->
         <div class="flex-1" />
 
         <!-- Actions -->
-        <UButton
+        <Button
           variant="outline"
-          color="neutral"
-          :loading="isSaving"
-          :disabled="!isDirty"
+          :disabled="!isDirty || isSaving"
           @click="savePage({ title: pageTitle })"
         >
+          <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
           Save
-        </UButton>
+        </Button>
 
-        <UButton
+        <Button
           v-if="currentStatus !== 'published'"
-          color="primary"
-          :loading="isSaving"
+          :disabled="isSaving"
           @click="publishPage"
         >
+          <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
           Publish
-        </UButton>
-        <UButton
+        </Button>
+        <Button
           v-else
           variant="outline"
-          color="primary"
-          :loading="isSaving"
+          :disabled="isSaving"
           @click="unpublishPage"
         >
+          <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
           Unpublish
-        </UButton>
+        </Button>
 
-        <UButton
+        <Button
           variant="ghost"
-          color="neutral"
-          icon="i-heroicons-cog-6-tooth"
           @click="showSettingsSlideover = true"
-        />
+        >
+          <Settings class="h-4 w-4" />
+        </Button>
       </div>
 
       <!-- Three-column layout -->
@@ -315,104 +316,117 @@ function formatDate(dateStr: unknown): string {
     </template>
 
     <!-- Settings Slideover -->
-    <USlideover
-      v-model:open="showSettingsSlideover"
-      title="Page Settings"
-      side="right"
-    >
-      <template #body>
+    <Sheet v-model:open="showSettingsSlideover">
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Page Settings</SheetTitle>
+        </SheetHeader>
         <div class="p-6 space-y-6">
           <!-- Page info -->
-          <div class="space-y-2 text-sm text-stone-500 dark:text-stone-400">
-            <p><span class="font-medium text-stone-700 dark:text-stone-300">ID:</span> {{ page?.id }}</p>
-            <p><span class="font-medium text-stone-700 dark:text-stone-300">Type:</span> {{ pageType?.displayName || page?.pageType }}</p>
-            <p v-if="page?.createdAt"><span class="font-medium text-stone-700 dark:text-stone-300">Created:</span> {{ formatDate(page.createdAt) }}</p>
-            <p v-if="page?.updatedAt"><span class="font-medium text-stone-700 dark:text-stone-300">Updated:</span> {{ formatDate(page.updatedAt) }}</p>
-            <p v-if="page?.publishedAt"><span class="font-medium text-stone-700 dark:text-stone-300">Published:</span> {{ formatDate(page.publishedAt) }}</p>
+          <div class="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+            <p><span class="font-medium text-[hsl(var(--foreground))]">ID:</span> {{ page?.id }}</p>
+            <p><span class="font-medium text-[hsl(var(--foreground))]">Type:</span> {{ pageType?.displayName || page?.pageType }}</p>
+            <p v-if="page?.createdAt"><span class="font-medium text-[hsl(var(--foreground))]">Created:</span> {{ formatDate(page.createdAt) }}</p>
+            <p v-if="page?.updatedAt"><span class="font-medium text-[hsl(var(--foreground))]">Updated:</span> {{ formatDate(page.updatedAt) }}</p>
+            <p v-if="page?.publishedAt"><span class="font-medium text-[hsl(var(--foreground))]">Published:</span> {{ formatDate(page.publishedAt) }}</p>
           </div>
 
-          <USeparator />
+          <Separator />
 
           <!-- URL Settings -->
           <div>
-            <h4 class="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">
+            <h4 class="text-sm font-semibold text-[hsl(var(--foreground))] mb-4">
               URL Settings
             </h4>
             <div class="space-y-4">
-              <UFormField label="Slug" name="slug" hint="URL path for this page">
-                <UInput
+              <div class="space-y-2">
+                <Label for="slug">Slug</Label>
+                <Input
+                  id="slug"
                   v-model="seoForm.slug"
                   placeholder="page-url-slug"
                   class="w-full"
                 />
-              </UFormField>
-              <div v-if="slugChanged" class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
-                <UIcon name="i-heroicons-exclamation-triangle" class="text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                <p class="text-sm text-amber-700 dark:text-amber-300">
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">URL path for this page</p>
+              </div>
+              <div v-if="slugChanged" class="flex items-start gap-2 p-3 bg-[hsl(var(--accent))] rounded-lg border border-[hsl(var(--border))]">
+                <AlertTriangle class="h-4 w-4 text-[hsl(var(--muted-foreground))] mt-0.5 flex-shrink-0" />
+                <p class="text-sm text-[hsl(var(--foreground))]">
                   <strong>Warning:</strong> Changing the slug will break existing URLs to this page. Make sure to set up redirects if needed.
                 </p>
               </div>
             </div>
           </div>
 
-          <USeparator />
+          <Separator />
 
           <!-- SEO Settings -->
           <div>
-            <h4 class="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">
+            <h4 class="text-sm font-semibold text-[hsl(var(--foreground))] mb-4">
               SEO Settings
             </h4>
             <div class="space-y-4">
-              <UFormField label="Meta Title" name="metaTitle" hint="Override page title for SEO">
-                <UInput
+              <div class="space-y-2">
+                <Label for="metaTitle">Meta Title</Label>
+                <Input
+                  id="metaTitle"
                   v-model="seoForm.metaTitle"
                   placeholder="Page title for search engines"
                   class="w-full"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Override page title for SEO</p>
+              </div>
 
-              <UFormField label="Meta Description" name="metaDescription">
-                <UTextarea
+              <div class="space-y-2">
+                <Label for="metaDescription">Meta Description</Label>
+                <Textarea
+                  id="metaDescription"
                   v-model="seoForm.metaDescription"
                   placeholder="Brief description for search results"
                   :rows="3"
                   class="w-full"
                 />
-              </UFormField>
+              </div>
 
-              <UFormField label="OG Image ID" name="metaImage" hint="Media ID for social sharing image">
-                <UInput
+              <div class="space-y-2">
+                <Label for="metaImage">OG Image ID</Label>
+                <Input
+                  id="metaImage"
                   v-model="seoForm.metaImage"
                   type="number"
                   placeholder="123"
                   class="w-full"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Media ID for social sharing image</p>
+              </div>
 
-              <UFormField label="Meta Extra" name="metaExtra" hint="Custom JSON for og:tags, twitter cards, etc.">
-                <UTextarea
+              <div class="space-y-2">
+                <Label for="metaExtra">Meta Extra</Label>
+                <Textarea
+                  id="metaExtra"
                   v-model="seoForm.metaExtra"
                   placeholder='{"og:type": "article", "twitter:card": "summary_large_image"}'
                   :rows="4"
                   class="w-full font-mono text-sm"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Custom JSON for og:tags, twitter cards, etc.</p>
+              </div>
             </div>
           </div>
 
           <!-- Save button -->
           <div class="pt-4">
-            <UButton
-              block
-              color="primary"
-              :loading="isSaving"
+            <Button
+              class="w-full"
+              :disabled="isSaving"
               @click="saveSeoSettings"
             >
+              <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
               Save Settings
-            </UButton>
+            </Button>
           </div>
         </div>
-      </template>
-    </USlideover>
+      </SheetContent>
+    </Sheet>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MediaItem } from '~~/lib/publisher-admin/types/media'
+import { Image, Video, Music, FileText, File, Check } from 'lucide-vue-next'
 
 interface FileCardProps {
   file: MediaItem
@@ -31,13 +32,13 @@ const thumbnailUrl = computed(() => {
   return props.file.url
 })
 
-const mediaIcon = computed(() => {
+const mediaIconComponent = computed(() => {
   const mimeType = props.file.mimeType
-  if (mimeType.startsWith('image/')) return 'i-heroicons-photo'
-  if (mimeType.startsWith('video/')) return 'i-heroicons-video-camera'
-  if (mimeType.startsWith('audio/')) return 'i-heroicons-musical-note'
-  if (mimeType.includes('pdf')) return 'i-heroicons-document-text'
-  return 'i-heroicons-document'
+  if (mimeType.startsWith('image/')) return Image
+  if (mimeType.startsWith('video/')) return Video
+  if (mimeType.startsWith('audio/')) return Music
+  if (mimeType.includes('pdf')) return FileText
+  return File
 })
 
 const formattedSize = computed(() => {
@@ -79,17 +80,17 @@ function handleDblClick(event: MouseEvent) {
   <button
     v-if="viewMode === 'grid'"
     type="button"
-    class="group relative flex flex-col rounded-lg border overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900"
+    class="group relative flex flex-col rounded-lg border overflow-hidden transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2"
     :class="[
       selected
-        ? 'border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-950 ring-2 ring-amber-500'
-        : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:border-stone-300 dark:hover:border-stone-600'
+        ? 'border-[hsl(var(--primary))] bg-[hsl(var(--accent))] ring-2 ring-[hsl(var(--primary))]'
+        : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--border))]'
     ]"
     @click="handleClick"
     @dblclick="handleDblClick"
   >
     <!-- Thumbnail -->
-    <div class="aspect-square bg-stone-100 dark:bg-stone-700 relative overflow-hidden">
+    <div class="aspect-square bg-[hsl(var(--muted))] relative overflow-hidden">
       <img
         v-if="isImage"
         :src="thumbnailUrl"
@@ -101,9 +102,9 @@ function handleDblClick(event: MouseEvent) {
         v-else
         class="w-full h-full flex items-center justify-center"
       >
-        <UIcon
-          :name="mediaIcon"
-          class="w-10 h-10 text-stone-400 dark:text-stone-500"
+        <component
+          :is="mediaIconComponent"
+          class="w-10 h-10 text-[hsl(var(--muted-foreground))]"
         />
       </div>
 
@@ -126,13 +127,12 @@ function handleDblClick(event: MouseEvent) {
           class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
           :class="[
             selected
-              ? 'bg-amber-600 border-amber-600'
+              ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]'
               : 'border-white/80 bg-black/20 group-hover:border-white'
           ]"
         >
-          <UIcon
+          <Check
             v-if="selected"
-            name="i-heroicons-check"
             class="w-3 h-3 text-white"
           />
         </div>
@@ -141,10 +141,9 @@ function handleDblClick(event: MouseEvent) {
       <!-- Selection Indicator (single mode) -->
       <div
         v-if="selected && mode === 'single'"
-        class="absolute top-2 right-2 w-6 h-6 bg-amber-600 rounded-full flex items-center justify-center"
+        class="absolute top-2 right-2 w-6 h-6 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center"
       >
-        <UIcon
-          name="i-heroicons-check"
+        <Check
           class="w-4 h-4 text-white"
         />
       </div>
@@ -153,12 +152,12 @@ function handleDblClick(event: MouseEvent) {
     <!-- File Info -->
     <div class="p-2 text-left">
       <p
-        class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate"
+        class="text-sm font-medium text-[hsl(var(--foreground))] truncate"
         :title="file.originalName"
       >
         {{ file.originalName }}
       </p>
-      <p class="text-xs text-stone-500 dark:text-stone-400">
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">
         {{ formattedSize }}
       </p>
     </div>
@@ -168,17 +167,17 @@ function handleDblClick(event: MouseEvent) {
   <button
     v-else
     type="button"
-    class="w-full flex items-center gap-4 px-4 py-3 rounded-lg border transition-all text-left focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900"
+    class="w-full flex items-center gap-4 px-4 py-3 rounded-lg border transition-all text-left focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2"
     :class="[
       selected
-        ? 'border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-950'
-        : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750'
+        ? 'border-[hsl(var(--primary))] bg-[hsl(var(--accent))]'
+        : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))]'
     ]"
     @click="handleClick"
     @dblclick="handleDblClick"
   >
     <!-- Thumbnail/Icon -->
-    <div class="w-10 h-10 flex-shrink-0 rounded border border-stone-200 dark:border-stone-600 overflow-hidden bg-stone-100 dark:bg-stone-700">
+    <div class="w-10 h-10 flex-shrink-0 rounded border border-[hsl(var(--border))] overflow-hidden bg-[hsl(var(--muted))]">
       <img
         v-if="isImage"
         :src="thumbnailUrl"
@@ -190,9 +189,9 @@ function handleDblClick(event: MouseEvent) {
         v-else
         class="w-full h-full flex items-center justify-center"
       >
-        <UIcon
-          :name="mediaIcon"
-          class="w-5 h-5 text-stone-400 dark:text-stone-500"
+        <component
+          :is="mediaIconComponent"
+          class="w-5 h-5 text-[hsl(var(--muted-foreground))]"
         />
       </div>
     </div>
@@ -200,12 +199,12 @@ function handleDblClick(event: MouseEvent) {
     <!-- File Name -->
     <div class="flex-1 min-w-0">
       <p
-        class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate"
+        class="text-sm font-medium text-[hsl(var(--foreground))] truncate"
         :title="file.originalName"
       >
         {{ file.originalName }}
       </p>
-      <p class="text-xs text-stone-500 dark:text-stone-400">
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">
         {{ file.mimeType }}
       </p>
     </div>
@@ -213,18 +212,18 @@ function handleDblClick(event: MouseEvent) {
     <!-- Dimensions (for images) -->
     <div
       v-if="dimensions"
-      class="flex-shrink-0 text-sm text-stone-500 dark:text-stone-400 hidden sm:block"
+      class="flex-shrink-0 text-sm text-[hsl(var(--muted-foreground))] hidden sm:block"
     >
       {{ dimensions }}
     </div>
 
     <!-- File Size -->
-    <div class="flex-shrink-0 text-sm text-stone-500 dark:text-stone-400">
+    <div class="flex-shrink-0 text-sm text-[hsl(var(--muted-foreground))]">
       {{ formattedSize }}
     </div>
 
     <!-- Date -->
-    <div class="flex-shrink-0 text-sm text-stone-500 dark:text-stone-400 hidden md:block">
+    <div class="flex-shrink-0 text-sm text-[hsl(var(--muted-foreground))] hidden md:block">
       {{ formattedDate }}
     </div>
 
@@ -237,13 +236,12 @@ function handleDblClick(event: MouseEvent) {
         class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
         :class="[
           selected
-            ? 'bg-amber-600 border-amber-600'
-            : 'border-stone-300 dark:border-stone-600'
+            ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]'
+            : 'border-[hsl(var(--border))]'
         ]"
       >
-        <UIcon
+        <Check
           v-if="selected"
-          name="i-heroicons-check"
           class="w-3 h-3 text-white"
         />
       </div>
@@ -252,10 +250,9 @@ function handleDblClick(event: MouseEvent) {
     <!-- Selection Indicator (single mode) -->
     <div
       v-if="selected && mode === 'single'"
-      class="flex-shrink-0 w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center"
+      class="flex-shrink-0 w-5 h-5 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center"
     >
-      <UIcon
-        name="i-heroicons-check"
+      <Check
         class="w-3 h-3 text-white"
       />
     </div>

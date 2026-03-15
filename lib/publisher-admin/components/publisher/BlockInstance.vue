@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { PageBlock, BlockTypeConfig } from '~~/lib/publisher/types'
+import { Button } from '@spavn/ui'
+import { Menu, Box, PenSquare, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   block: PageBlock
@@ -12,9 +14,10 @@ const emit = defineEmits<{
   delete: []
 }>()
 
-// Get the icon for the block type
-const blockIcon = computed(() => {
-  return props.blockTypeConfig?.icon || 'i-heroicons-cube'
+// Get the icon component for the block type
+const blockIconComponent = computed(() => {
+  // The blockTypeConfig.icon is a heroicon string; we use Box as fallback
+  return Box
 })
 
 // Get the display name for the block type
@@ -25,11 +28,11 @@ const blockDisplayName = computed(() => {
 // Generate preview text from the first string/text field in block data
 const previewText = computed(() => {
   if (!props.block.data) return ''
-  
+
   // Find the first string value in the block data
   const fields = props.blockTypeConfig?.fields || {}
   const fieldNames = Object.keys(fields)
-  
+
   // First, try to find a title, headline, or name field
   const titleFields = ['title', 'headline', 'name', 'heading']
   for (const fieldName of titleFields) {
@@ -40,7 +43,7 @@ const previewText = computed(() => {
       }
     }
   }
-  
+
   // Then look for any string/text field
   for (const [fieldName, fieldConfig] of Object.entries(fields)) {
     if (fieldConfig.type === 'string' || fieldConfig.type === 'text') {
@@ -50,20 +53,20 @@ const previewText = computed(() => {
       }
     }
   }
-  
+
   // Fallback: look for any string value in data
   for (const value of Object.values(props.block.data)) {
     if (typeof value === 'string' && value.trim()) {
       return truncateText(value, 50)
     }
   }
-  
+
   return ''
 })
 
 function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
-  return text.slice(0, maxLength).trim() + '…'
+  return text.slice(0, maxLength).trim() + '...'
 }
 
 function handleSelect() {
@@ -81,14 +84,14 @@ function handleDelete(event: MouseEvent) {
     class="group flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer"
     :class="[
       isSelected
-        ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/50 ring-2 ring-primary-500'
-        : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:border-stone-400 dark:hover:border-stone-600 hover:shadow-sm'
+        ? 'border-[hsl(var(--primary))] bg-[hsl(var(--accent))] ring-2 ring-[hsl(var(--primary))]'
+        : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--border))] hover:shadow-sm'
     ]"
     @click="handleSelect"
   >
     <!-- Drag handle -->
-    <div class="drag-handle flex-shrink-0 text-stone-400 dark:text-stone-500 cursor-grab active:cursor-grabbing">
-      <UIcon name="i-heroicons-bars-3" class="text-lg" />
+    <div class="drag-handle flex-shrink-0 text-[hsl(var(--muted-foreground))] cursor-grab active:cursor-grabbing">
+      <Menu class="w-5 h-5" />
     </div>
 
     <!-- Block type icon -->
@@ -97,22 +100,22 @@ function handleDelete(event: MouseEvent) {
         class="w-8 h-8 rounded-md flex items-center justify-center"
         :class="[
           isSelected
-            ? 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
-            : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'
+            ? 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]'
+            : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
         ]"
       >
-        <UIcon :name="blockIcon" class="text-lg" />
+        <component :is="blockIconComponent" class="w-5 h-5" />
       </div>
     </div>
 
     <!-- Block info -->
     <div class="flex-1 min-w-0">
-      <div class="text-sm font-medium text-stone-800 dark:text-stone-200">
+      <div class="text-sm font-medium text-[hsl(var(--foreground))]">
         {{ blockDisplayName }}
       </div>
       <div
         v-if="previewText"
-        class="text-xs text-stone-500 dark:text-stone-400 truncate mt-0.5"
+        class="text-xs text-[hsl(var(--muted-foreground))] truncate mt-0.5"
       >
         {{ previewText }}
       </div>
@@ -120,20 +123,21 @@ function handleDelete(event: MouseEvent) {
 
     <!-- Actions -->
     <div class="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-      <UButton
-        size="xs"
+      <Button
+        size="sm"
         variant="ghost"
-        color="neutral"
-        icon="i-heroicons-pencil-square"
         @click.stop="handleSelect"
-      />
-      <UButton
-        size="xs"
+      >
+        <PenSquare class="h-4 w-4" />
+      </Button>
+      <Button
+        size="sm"
         variant="ghost"
-        color="error"
-        icon="i-heroicons-trash"
+        class="text-[hsl(var(--destructive))]"
         @click="handleDelete"
-      />
+      >
+        <Trash2 class="h-4 w-4" />
+      </Button>
     </div>
   </div>
 </template>

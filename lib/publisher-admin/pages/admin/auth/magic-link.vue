@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Box, RefreshCw, CheckCircle, AlertTriangle, Mail, Loader2 } from 'lucide-vue-next'
+import { Button, Card, CardContent, Alert, AlertTitle } from '@spavn/ui'
+
 definePageMeta({
   layout: false,
 })
@@ -57,71 +60,68 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-100 dark:bg-stone-950 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-[hsl(var(--background))] flex items-center justify-center p-4">
     <div class="w-full max-w-sm">
       <!-- Logo & Heading -->
       <div class="text-center mb-8">
-        <UIcon name="i-heroicons-cube-transparent" class="text-amber-600 dark:text-amber-500 text-4xl mb-3" />
-        <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Publisher</h1>
+        <Box class="w-9 h-9 text-[hsl(var(--primary))] mx-auto mb-3" />
+        <h1 class="text-2xl font-bold text-[hsl(var(--foreground))]">Publisher</h1>
       </div>
 
-      <UCard>
-        <!-- Verifying State -->
-        <div v-if="status === 'verifying'" class="text-center py-6 space-y-4">
-          <UIcon name="i-heroicons-arrow-path" class="text-3xl text-amber-600 dark:text-amber-500 animate-spin" />
-          <p class="text-stone-600 dark:text-stone-400 font-medium">Verifying your sign-in link...</p>
-        </div>
-
-        <!-- Success State -->
-        <div v-else-if="status === 'success'" class="text-center py-6 space-y-4">
-          <UIcon name="i-heroicons-check-circle" class="text-3xl text-green-600 dark:text-green-500" />
-          <div>
-            <p class="text-stone-900 dark:text-stone-100 font-medium">Signed in successfully!</p>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">Redirecting to dashboard...</p>
+      <Card>
+        <CardContent class="pt-6">
+          <!-- Verifying State -->
+          <div v-if="status === 'verifying'" class="text-center py-6 space-y-4">
+            <RefreshCw class="w-8 h-8 text-[hsl(var(--primary))] mx-auto animate-spin" />
+            <p class="text-[hsl(var(--muted-foreground))] font-medium">Verifying your sign-in link...</p>
           </div>
-        </div>
 
-        <!-- Error State -->
-        <div v-else class="space-y-4">
-          <UAlert
-            color="error"
-            variant="subtle"
-            icon="i-heroicons-exclamation-triangle"
-            :title="errorMessage"
-          />
-
-          <p class="text-sm text-stone-500 dark:text-stone-400 text-center">
-            The link may have expired or already been used.
-          </p>
-
-          <div class="flex flex-col gap-2">
-            <UButton
-              block
-              size="lg"
-              variant="outline"
-              color="neutral"
-              to="/admin/login"
-              icon="i-heroicons-envelope"
-              @click.prevent="navigateTo('/admin/login')"
-            >
-              Request a New Link
-            </UButton>
-
-            <UButton
-              block
-              size="lg"
-              variant="ghost"
-              to="/admin/login"
-              @click.prevent="navigateTo('/admin/login')"
-            >
-              Back to Sign In
-            </UButton>
+          <!-- Success State -->
+          <div v-else-if="status === 'success'" class="text-center py-6 space-y-4">
+            <CheckCircle class="w-8 h-8 text-green-600 dark:text-green-500 mx-auto" />
+            <div>
+              <p class="text-[hsl(var(--foreground))] font-medium">Signed in successfully!</p>
+              <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">Redirecting to dashboard...</p>
+            </div>
           </div>
-        </div>
-      </UCard>
+
+          <!-- Error State -->
+          <div v-else class="space-y-4">
+            <Alert variant="destructive">
+              <AlertTriangle class="h-4 w-4" />
+              <AlertTitle>{{ errorMessage }}</AlertTitle>
+            </Alert>
+
+            <p class="text-sm text-[hsl(var(--muted-foreground))] text-center">
+              The link may have expired or already been used.
+            </p>
+
+            <div class="flex flex-col gap-2">
+              <Button
+                class="w-full"
+                size="lg"
+                variant="outline"
+                @click="navigateTo('/admin/login')"
+              >
+                <Mail class="h-5 w-5 mr-2" />
+                Request a New Link
+              </Button>
+
+              <Button
+                class="w-full"
+                size="lg"
+                variant="ghost"
+                @click="navigateTo('/admin/login')"
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Footer -->
-      <p class="text-center text-xs text-stone-400 dark:text-stone-500 mt-6">
+      <p class="text-center text-xs text-[hsl(var(--muted-foreground))] mt-6">
         Publisher CMS v0.1.0
       </p>
     </div>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Button } from '@spavn/ui'
+import { FolderInput, Trash2, X } from 'lucide-vue-next'
+
 defineProps<{
   selectedCount: number
   isBulkOperating: boolean
@@ -23,40 +26,37 @@ const emit = defineEmits<{
     >
       <div
         v-if="selectedCount > 0"
-        class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 shadow-lg"
+        class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-lg"
       >
-        <span class="text-sm font-medium text-stone-700 dark:text-stone-300">
+        <span class="text-sm font-medium text-[hsl(var(--foreground))]">
           {{ selectedCount }} selected
         </span>
-        <div class="w-px h-5 bg-stone-200 dark:bg-stone-700" />
-        <UButton
+        <div class="w-px h-5 bg-[hsl(var(--border))]" />
+        <Button
           variant="outline"
-          color="neutral"
-          icon="i-heroicons-folder-arrow-right"
           :disabled="isBulkOperating"
           @click="emit('move')"
         >
+          <FolderInput class="h-4 w-4 mr-2" />
           Move to Folder
-        </UButton>
-        <UButton
-          variant="outline"
-          color="error"
-          icon="i-heroicons-trash"
+        </Button>
+        <Button
+          variant="destructive"
           :disabled="isBulkOperating"
           @click="emit('delete')"
         >
+          <Trash2 class="h-4 w-4 mr-2" />
           Delete
-        </UButton>
-        <div class="w-px h-5 bg-stone-200 dark:bg-stone-700" />
-        <UButton
+        </Button>
+        <div class="w-px h-5 bg-[hsl(var(--border))]" />
+        <Button
           variant="ghost"
-          color="neutral"
-          icon="i-heroicons-x-mark"
           :disabled="isBulkOperating"
           @click="emit('cancel')"
         >
+          <X class="h-4 w-4 mr-2" />
           Cancel
-        </UButton>
+        </Button>
       </div>
     </Transition>
   </Teleport>

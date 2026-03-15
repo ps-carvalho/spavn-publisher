@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import type { GeneralSettings } from '~/server/utils/publisher/settings/types'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { AlertTriangle, Check, RefreshCw, Loader2 } from 'lucide-vue-next'
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 
@@ -12,7 +20,7 @@ const validationErrors = ref<Record<string, string[]>>({})
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 
-const toast = useToast()
+const { toast } = useToast()
 
 // ─── Options ───────────────────────────────────────────────────────────────────
 
@@ -83,10 +91,10 @@ async function loadSettings() {
     originalSettings.value = JSON.parse(JSON.stringify(response.settings))
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load settings'
-    toast.add({
+    toast({
       title: 'Failed to load settings',
-      description: error.value,
-      color: 'error',
+      description: error.value ?? undefined,
+      variant: 'destructive',
     })
   } finally {
     loading.value = false
@@ -107,20 +115,19 @@ async function saveSettings() {
 
     originalSettings.value = JSON.parse(JSON.stringify(settings.value))
 
-    toast.add({
+    toast({
       title: 'Settings saved',
       description: 'General settings have been updated',
-      color: 'success',
     })
   } catch (err: any) {
     if (err?.data?.error?.details) {
       validationErrors.value = err.data.error.details
     }
 
-    toast.add({
+    toast({
       title: 'Failed to save settings',
       description: err?.data?.error?.message || err.message || 'An error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     saving.value = false
@@ -139,198 +146,230 @@ function resetSettings() {
   <div class="max-w-3xl space-y-6">
     <!-- Header -->
     <div>
-      <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
+      <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] tracking-tight">
         General Settings
       </h3>
-      <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+      <p class="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
         Configure site-wide settings and defaults
       </p>
     </div>
 
     <!-- Loading state -->
     <div v-if="loading" class="py-8 text-center">
-      <UIcon name="i-heroicons-arrow-path" class="text-2xl animate-spin text-stone-400" />
-      <p class="mt-2 text-sm text-stone-500 dark:text-stone-400">
+      <RefreshCw class="mx-auto h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))]" />
+      <p class="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
         Loading settings...
       </p>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-      <p class="text-red-700 dark:text-red-300">{{ error }}</p>
-      <UButton variant="outline" size="sm" class="mt-2" @click="loadSettings">
+    <div v-else-if="error" class="p-4 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)]">
+      <p class="text-[hsl(var(--destructive))]">{{ error }}</p>
+      <Button variant="outline" size="sm" class="mt-2" @click="loadSettings">
         Try Again
-      </UButton>
+      </Button>
     </div>
 
     <!-- Settings form -->
     <form v-else-if="settings" @submit.prevent="saveSettings" class="space-y-8">
       <!-- Site Identity -->
       <section class="space-y-4">
-        <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
+        <h4 class="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
           Site Identity
         </h4>
         <div class="space-y-4">
-          <UFormField label="Site Name" required :error="validationErrors.siteName?.[0]">
-            <UInput v-model="settings.siteName" placeholder="Publisher CMS" />
-          </UFormField>
-          <UFormField label="Site Description" :error="validationErrors.siteDescription?.[0]">
-            <UTextarea v-model="settings.siteDescription" placeholder="A brief description of your site" :rows="3" />
-          </UFormField>
+          <div class="space-y-2">
+            <Label for="siteName">Site Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="siteName" v-model="settings.siteName" placeholder="Publisher CMS" />
+            <p v-if="validationErrors.siteName?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.siteName[0] }}</p>
+          </div>
+          <div class="space-y-2">
+            <Label for="siteDescription">Site Description</Label>
+            <Textarea id="siteDescription" v-model="settings.siteDescription" placeholder="A brief description of your site" :rows="3" />
+            <p v-if="validationErrors.siteDescription?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.siteDescription[0] }}</p>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="Logo URL" :error="validationErrors.logoUrl?.[0]">
-              <UInput v-model="settings.logoUrl" placeholder="https://example.com/logo.png" />
-            </UFormField>
-            <UFormField label="Favicon URL" :error="validationErrors.faviconUrl?.[0]">
-              <UInput v-model="settings.faviconUrl" placeholder="https://example.com/favicon.ico" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label for="logoUrl">Logo URL</Label>
+              <Input id="logoUrl" v-model="settings.logoUrl" placeholder="https://example.com/logo.png" />
+              <p v-if="validationErrors.logoUrl?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.logoUrl[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label for="faviconUrl">Favicon URL</Label>
+              <Input id="faviconUrl" v-model="settings.faviconUrl" placeholder="https://example.com/favicon.ico" />
+              <p v-if="validationErrors.faviconUrl?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.faviconUrl[0] }}</p>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Regional Settings -->
       <section class="space-y-4">
-        <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
+        <h4 class="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
           Regional Settings
         </h4>
         <div class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="Timezone" :error="validationErrors.timezone?.[0]">
-              <USelect v-model="settings.timezone" :items="timezoneOptions" />
-            </UFormField>
-            <UFormField label="Locale" :error="validationErrors.locale?.[0]">
-              <USelect v-model="settings.locale" :items="localeOptions" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label>Timezone</Label>
+              <Select v-model="settings.timezone">
+                <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in timezoneOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="validationErrors.timezone?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.timezone[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label>Locale</Label>
+              <Select v-model="settings.locale">
+                <SelectTrigger><SelectValue placeholder="Select locale" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in localeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="validationErrors.locale?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.locale[0] }}</p>
+            </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="Date Format" :error="validationErrors.dateFormat?.[0]">
-              <USelect v-model="settings.dateFormat" :items="dateFormatOptions" />
-            </UFormField>
-            <UFormField label="Time Format" :error="validationErrors.timeFormat?.[0]">
-              <USelect v-model="settings.timeFormat" :items="timeFormatOptions" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label>Date Format</Label>
+              <Select v-model="settings.dateFormat">
+                <SelectTrigger><SelectValue placeholder="Select date format" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in dateFormatOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="validationErrors.dateFormat?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.dateFormat[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label>Time Format</Label>
+              <Select v-model="settings.timeFormat">
+                <SelectTrigger><SelectValue placeholder="Select time format" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in timeFormatOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="validationErrors.timeFormat?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.timeFormat[0] }}</p>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- SEO Defaults -->
       <section class="space-y-4">
-        <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
+        <h4 class="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
           SEO Defaults
         </h4>
         <div class="space-y-4">
-          <UFormField
-            label="Title Template"
-            hint="%s will be replaced with the page title"
-            :error="validationErrors['seo.titleTemplate']?.[0]"
-          >
-            <UInput v-model="settings.seo.titleTemplate" placeholder="%s — My Site" />
-          </UFormField>
-          <UFormField
-            label="Default Meta Description"
-            :error="validationErrors['seo.defaultDescription']?.[0]"
-          >
-            <UTextarea
+          <div class="space-y-2">
+            <Label for="seoTitleTemplate">Title Template</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">%s will be replaced with the page title</p>
+            <Input id="seoTitleTemplate" v-model="settings.seo.titleTemplate" placeholder="%s — My Site" />
+            <p v-if="validationErrors['seo.titleTemplate']?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors['seo.titleTemplate'][0] }}</p>
+          </div>
+          <div class="space-y-2">
+            <Label for="seoDefaultDescription">Default Meta Description</Label>
+            <Textarea
+              id="seoDefaultDescription"
               v-model="settings.seo.defaultDescription"
               placeholder="A default description for pages without a custom description"
               :rows="4"
             />
-          </UFormField>
+            <p v-if="validationErrors['seo.defaultDescription']?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors['seo.defaultDescription'][0] }}</p>
+          </div>
         </div>
       </section>
 
       <!-- Maintenance Mode -->
       <section class="space-y-4">
-        <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
+        <h4 class="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
           Maintenance Mode
         </h4>
-        <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+        <div class="p-4 rounded-lg bg-[hsl(var(--accent))] border border-[hsl(var(--border))]">
           <div class="flex items-center justify-between">
             <div>
-              <p class="font-medium text-amber-800 dark:text-amber-200">Enable Maintenance Mode</p>
-              <p class="text-sm text-amber-600 dark:text-amber-400">
+              <p class="font-medium text-[hsl(var(--foreground))]">Enable Maintenance Mode</p>
+              <p class="text-sm text-[hsl(var(--muted-foreground))]">
                 Visitors will see a maintenance message instead of the site
               </p>
             </div>
-            <USwitch v-model:checked="settings.maintenance.enabled" />
+            <Switch v-model:checked="settings.maintenance.enabled" />
           </div>
-          <UFormField
+          <div
             v-if="settings.maintenance.enabled"
-            label="Maintenance Message"
-            class="mt-4"
-            :error="validationErrors['maintenance.message']?.[0]"
+            class="mt-4 space-y-2"
           >
-            <UTextarea
+            <Label for="maintenanceMessage">Maintenance Message</Label>
+            <Textarea
+              id="maintenanceMessage"
               v-model="settings.maintenance.message"
               placeholder="Site is under maintenance. Please check back soon."
               :rows="3"
             />
-          </UFormField>
+            <p v-if="validationErrors['maintenance.message']?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors['maintenance.message'][0] }}</p>
+          </div>
         </div>
       </section>
 
       <!-- Analytics -->
       <section class="space-y-4">
-        <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 uppercase tracking-wide">
+        <h4 class="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
           Analytics
         </h4>
         <div class="space-y-4">
-          <UFormField
-            label="Google Tag ID"
-            hint="e.g., G-XXXXXXXXXX"
-            :error="validationErrors['analytics.googleTagId']?.[0]"
-          >
-            <UInput v-model="settings.analytics.googleTagId" placeholder="G-XXXXXXXXXX" />
-          </UFormField>
-          <UFormField
-            label="Custom Scripts"
-            hint="Additional scripts to include in the head (use with caution)"
-            :error="validationErrors['analytics.customScripts']?.[0]"
-          >
-            <UTextarea
+          <div class="space-y-2">
+            <Label for="googleTagId">Google Tag ID</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">e.g., G-XXXXXXXXXX</p>
+            <Input id="googleTagId" v-model="settings.analytics.googleTagId" placeholder="G-XXXXXXXXXX" />
+            <p v-if="validationErrors['analytics.googleTagId']?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors['analytics.googleTagId'][0] }}</p>
+          </div>
+          <div class="space-y-2">
+            <Label for="customScripts">Custom Scripts</Label>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Additional scripts to include in the head (use with caution)</p>
+            <Textarea
+              id="customScripts"
               v-model="settings.analytics.customScripts"
               placeholder="<script>...</script>"
               :rows="5"
               class="font-mono text-sm"
             />
-          </UFormField>
+            <p v-if="validationErrors['analytics.customScripts']?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors['analytics.customScripts'][0] }}</p>
+          </div>
         </div>
       </section>
 
       <!-- Unsaved Changes Warning -->
       <div
         v-if="hasChanges"
-        class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800"
+        class="p-3 rounded-lg bg-[hsl(var(--accent))] border border-[hsl(var(--border))]"
       >
         <div class="flex items-center gap-2">
-          <UIcon name="i-heroicons-exclamation-triangle" class="text-amber-600" />
-          <span class="text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle class="h-4 w-4 text-[hsl(var(--primary))]" />
+          <span class="text-sm text-[hsl(var(--foreground))]">
             You have unsaved changes
           </span>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
-        <UButton
+      <div class="flex gap-3 pt-4 border-t border-[hsl(var(--border))]">
+        <Button
           type="submit"
-          :loading="saving"
-          :disabled="!hasChanges"
+          :disabled="!hasChanges || saving"
         >
-          <template v-if="!saving">
-            <UIcon name="i-heroicons-check" class="mr-1" />
-          </template>
+          <Loader2 v-if="saving" class="h-4 w-4 mr-2 animate-spin" />
+          <Check v-else class="h-4 w-4 mr-2" />
           Save Changes
-        </UButton>
+        </Button>
 
-        <UButton
+        <Button
           variant="outline"
-          color="neutral"
           :disabled="!hasChanges || saving"
           @click="resetSettings"
         >
           Reset
-        </UButton>
+        </Button>
       </div>
     </form>
   </div>

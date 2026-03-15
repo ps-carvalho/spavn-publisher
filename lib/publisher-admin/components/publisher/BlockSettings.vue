@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { PageBlock, BlockTypeConfig } from '~~/lib/publisher/types'
+import { Button } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Box, Check, Trash2, Loader2, AlertTriangle } from 'lucide-vue-next'
 
 const props = defineProps<{
   block: PageBlock | null
@@ -90,20 +93,22 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class="w-80 border-l border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex flex-col">
+  <div class="w-80 border-l border-[hsl(var(--border))] bg-[hsl(var(--card))] flex flex-col">
     <!-- Header -->
-    <div class="p-4 border-b border-stone-200 dark:border-stone-800">
-      <h3 class="text-sm font-semibold text-stone-900 dark:text-stone-100">
+    <div class="p-4 border-b border-[hsl(var(--border))]">
+      <h3 class="text-sm font-semibold text-[hsl(var(--foreground))]">
         Block Settings
       </h3>
     </div>
 
     <!-- No block selected -->
-    <div v-if="!block" class="flex-1 flex items-center justify-center text-stone-400 dark:text-stone-500">
+    <div v-if="!block" class="flex-1 flex items-center justify-center text-[hsl(var(--muted-foreground))]">
       <div class="text-center px-6">
-        <div class="text-4xl mb-3">📦</div>
-        <p class="text-sm font-medium text-stone-500 dark:text-stone-400 mb-1">No block selected</p>
-        <p class="text-xs text-stone-400 dark:text-stone-500">
+        <div class="text-4xl mb-3">
+          <Box class="w-10 h-10 mx-auto text-[hsl(var(--muted-foreground))]" />
+        </div>
+        <p class="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">No block selected</p>
+        <p class="text-xs text-[hsl(var(--muted-foreground))]">
           Click a block in the canvas to edit it
         </p>
       </div>
@@ -112,10 +117,10 @@ async function handleSave() {
     <!-- Block settings form -->
     <div v-else class="flex-1 overflow-auto">
       <!-- Block type header -->
-      <div class="p-4 border-b border-stone-200 dark:border-stone-800">
+      <div class="p-4 border-b border-[hsl(var(--border))]">
         <div class="flex items-center gap-2">
-          <UIcon :name="blockType?.icon || 'i-heroicons-cube'" class="text-stone-500 dark:text-stone-400" />
-          <span class="text-sm font-semibold text-stone-900 dark:text-stone-100">
+          <Box class="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+          <span class="text-sm font-semibold text-[hsl(var(--foreground))]">
             {{ blockType?.displayName || block.blockType }}
           </span>
         </div>
@@ -133,63 +138,69 @@ async function handleSave() {
       </div>
 
       <!-- No fields -->
-      <div v-else class="p-4 text-sm text-stone-500 dark:text-stone-400 text-center py-8">
+      <div v-else class="p-4 text-sm text-[hsl(var(--muted-foreground))] text-center py-8">
         This block has no configurable fields
       </div>
     </div>
 
     <!-- Unsaved changes indicator -->
-    <div v-if="hasChanges && block" class="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-200 dark:border-amber-800">
-      <p class="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1">
-        <UIcon name="i-heroicons-exclamation-circle" />
+    <div v-if="hasChanges && block" class="px-4 py-2 bg-[hsl(var(--accent))] border-t border-[hsl(var(--border))]">
+      <p class="text-xs text-[hsl(var(--primary))] flex items-center gap-1">
+        <AlertTriangle class="w-3 h-3" />
         You have unsaved changes
       </p>
     </div>
 
     <!-- Actions -->
-    <div v-if="block" class="p-4 border-t border-stone-200 dark:border-stone-800 space-y-2">
-      <UButton
-        block
-        color="primary"
-        icon="i-heroicons-check"
-        :disabled="!hasChanges"
-        :loading="isSaving"
-        @click="handleSave"
-      >
-        Save Changes
-      </UButton>
+    <div v-if="block" class="p-4 border-t border-[hsl(var(--border))] space-y-2">
+      <template v-if="!isSaving">
+        <Button
+          class="w-full"
+          :disabled="!hasChanges"
+          @click="handleSave"
+        >
+          <Check class="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
+      </template>
+      <template v-else>
+        <Button
+          class="w-full"
+          disabled
+        >
+          <Loader2 class="h-4 w-4 animate-spin mr-2" />
+          Saving...
+        </Button>
+      </template>
 
-      <UButton
-        block
-        color="error"
+      <Button
         variant="ghost"
-        icon="i-heroicons-trash"
+        class="w-full text-[hsl(var(--destructive))]"
         @click="confirmDelete"
       >
+        <Trash2 class="h-4 w-4 mr-2" />
         Delete Block
-      </UButton>
+      </Button>
     </div>
 
     <!-- Delete confirmation modal -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-            Delete Block
-          </h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete this block? This cannot be undone.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">
-              Cancel
-            </UButton>
-            <UButton color="error" @click="handleDelete">
-              Delete
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Block</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete this block? This cannot be undone.
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">
+            Cancel
+          </Button>
+          <Button variant="destructive" @click="handleDelete">
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

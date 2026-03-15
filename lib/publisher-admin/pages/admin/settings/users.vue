@@ -1,4 +1,17 @@
 <script setup lang="ts">
+import { Plus, Search, Pencil, ShieldCheck, Trash2, Users, Mail, Fingerprint, RefreshCw, Lock, Loader2 } from 'lucide-vue-next'
+import {
+  Button, Input, Label, Switch, Badge,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Select, SelectTrigger, SelectContent, SelectItem, SelectValue,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext,
+  Alert, AlertTitle, AlertDescription,
+  Checkbox,
+} from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { AlertTriangle } from 'lucide-vue-next'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
@@ -17,7 +30,7 @@ interface UserInfo {
   createdAt: string
 }
 
-const toast = useToast()
+const { toast } = useToast()
 const showInviteModal = ref(false)
 const showEditModal = ref(false)
 const showAuthMethodModal = ref(false)
@@ -81,15 +94,6 @@ const totalPages = computed(() =>
   Math.ceil(filteredUsers.value.length / pageSize)
 )
 
-const columns = [
-  { accessorKey: 'email', header: 'Email' },
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'role', header: 'Role' },
-  { accessorKey: 'auth', header: 'Auth' },
-  { accessorKey: 'status', header: 'Status' },
-  { id: 'actions', header: '' },
-]
-
 const roleOptions = [
   { label: 'Super Admin', value: 'super-admin' },
   { label: 'Admin', value: 'admin' },
@@ -114,10 +118,10 @@ async function inviteUser() {
     await refresh()
     showInviteModal.value = false
     inviteForm.value = { email: '', firstName: '', lastName: '', role: 'editor', password: '' }
-    toast.add({ title: 'User created', color: 'success' })
+    toast({ title: 'User created' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to create user', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to create user', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -146,10 +150,10 @@ async function saveEdit() {
     })
     await refresh()
     showEditModal.value = false
-    toast.add({ title: 'User updated', color: 'success' })
+    toast({ title: 'User updated' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to update user', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to update user', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -161,10 +165,10 @@ async function deleteUser(user: UserInfo) {
   try {
     await $fetch(`/api/publisher/users/${user.id}`, { method: 'DELETE' })
     await refresh()
-    toast.add({ title: 'User deleted', color: 'success' })
+    toast({ title: 'User deleted' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to delete', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to delete', variant: 'destructive' })
   }
 }
 
@@ -187,10 +191,10 @@ async function saveAuthMethod() {
     })
     await refresh()
     showAuthMethodModal.value = false
-    toast.add({ title: 'Auth method updated', color: 'success' })
+    toast({ title: 'Auth method updated' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to update auth method', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to update auth method', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -205,10 +209,10 @@ async function forcePasswordless(user: UserInfo) {
       body: { authMethod: 'magic-link', removePassword: true },
     })
     await refresh()
-    toast.add({ title: 'User set to passwordless', color: 'success' })
+    toast({ title: 'User set to passwordless' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to update', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to update', variant: 'destructive' })
   }
 }
 
@@ -220,31 +224,31 @@ async function resetAuthMethod(user: UserInfo) {
       body: { authMethod: 'password' },
     })
     await refresh()
-    toast.add({ title: 'Auth method reset to password', color: 'success' })
+    toast({ title: 'Auth method reset to password' })
   }
   catch (e: any) {
-    toast.add({ title: e?.data?.data?.error?.message || 'Failed to reset', color: 'error' })
+    toast({ title: e?.data?.data?.error?.message || 'Failed to reset', variant: 'destructive' })
   }
 }
 
 function getRoleDotClass(role: string): string {
   const colors: Record<string, string> = {
-    'super-admin': 'bg-red-500 dark:bg-red-400',
-    admin: 'bg-amber-500 dark:bg-amber-400',
-    editor: 'bg-blue-500 dark:bg-blue-400',
-    viewer: 'bg-stone-400 dark:bg-stone-500',
+    'super-admin': 'bg-[hsl(var(--destructive))]',
+    admin: 'bg-[hsl(var(--primary))]',
+    editor: 'bg-[hsl(var(--accent))]',
+    viewer: 'bg-[hsl(var(--muted-foreground))]',
   }
-  return colors[role] || 'bg-stone-400 dark:bg-stone-500'
+  return colors[role] || 'bg-[hsl(var(--muted-foreground))]'
 }
 
 function getRoleTextClass(role: string): string {
   const colors: Record<string, string> = {
-    'super-admin': 'text-red-600 dark:text-red-400',
-    admin: 'text-amber-600 dark:text-amber-400',
-    editor: 'text-blue-600 dark:text-blue-400',
-    viewer: 'text-stone-500 dark:text-stone-400',
+    'super-admin': 'text-[hsl(var(--destructive))]',
+    admin: 'text-[hsl(var(--foreground))]',
+    editor: 'text-[hsl(var(--accent-foreground))]',
+    viewer: 'text-[hsl(var(--muted-foreground))]',
   }
-  return colors[role] || 'text-stone-500 dark:text-stone-400'
+  return colors[role] || 'text-[hsl(var(--muted-foreground))]'
 }
 
 function getAuthMethodLabel(method: string): string {
@@ -257,14 +261,15 @@ function getAuthMethodLabel(method: string): string {
   return labels[method] || method
 }
 
-function getAuthMethodIcon(method: string): string {
-  const icons: Record<string, string> = {
-    password: 'i-heroicons-lock-closed',
-    'magic-link': 'i-heroicons-envelope',
-    passkey: 'i-heroicons-finger-print',
-    totp: 'i-heroicons-shield-check',
-  }
-  return icons[method] || 'i-heroicons-lock-closed'
+const authMethodIconMap: Record<string, any> = {
+  password: Lock,
+  'magic-link': Mail,
+  passkey: Fingerprint,
+  totp: ShieldCheck,
+}
+
+function getAuthMethodIconComponent(method: string) {
+  return authMethodIconMap[method] || Lock
 }
 </script>
 
@@ -272,299 +277,351 @@ function getAuthMethodIcon(method: string): string {
   <div>
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Users & Roles</h2>
-      <UButton icon="i-heroicons-plus" color="neutral" @click="showInviteModal = true">
+      <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">Users & Roles</h2>
+      <Button @click="showInviteModal = true">
+        <Plus class="h-4 w-4 mr-2" />
         Add User
-      </UButton>
+      </Button>
     </div>
 
     <!-- Filter bar -->
     <div class="flex items-center gap-4 mb-4">
-      <UInput
-        v-model="search"
-        placeholder="Search users..."
-        icon="i-heroicons-magnifying-glass"
-        class="w-64"
-      />
+      <div class="relative w-64">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+        <Input
+          v-model="search"
+          placeholder="Search users..."
+          class="pl-9 w-full"
+        />
+      </div>
     </div>
 
     <!-- Table card -->
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable :data="paginatedUsers" :columns="columns" :loading="status === 'pending'">
-        <template #email-cell="{ row }">
-          <NuxtLink
-            :to="`/admin/users/${row.original.id}`"
-            class="font-medium text-stone-900 dark:text-stone-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-          >
-            {{ row.original.email }}
-          </NuxtLink>
-        </template>
-
-        <template #name-cell="{ row }">
-          <span class="text-stone-600 dark:text-stone-400">
-            {{ [row.original.firstName, row.original.lastName].filter(Boolean).join(' ') || '—' }}
-          </span>
-        </template>
-
-        <template #role-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full" :class="getRoleDotClass(row.original.role)" />
-            <span class="text-sm capitalize" :class="getRoleTextClass(row.original.role)">
-              {{ row.original.role }}
-            </span>
-          </div>
-        </template>
-
-        <template #auth-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1.5">
-              <UIcon
-                :name="getAuthMethodIcon(row.original.authMethod)"
-                class="text-sm text-stone-500 dark:text-stone-400"
-              />
-              <span class="text-sm text-stone-600 dark:text-stone-400">
-                {{ getAuthMethodLabel(row.original.authMethod) }}
-              </span>
-            </div>
-            <!-- Auth badges -->
-            <div class="flex items-center gap-1">
-              <span
-                v-if="row.original.hasTOTP"
-                class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                title="TOTP enabled"
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Email</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Auth</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead class="w-[100px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="status === 'pending'">
+            <TableCell colspan="6" class="text-center py-8">
+              <Loader2 class="h-6 w-6 animate-spin mx-auto text-[hsl(var(--muted-foreground))]" />
+            </TableCell>
+          </TableRow>
+          <TableRow v-for="u in paginatedUsers" :key="u.id">
+            <TableCell>
+              <NuxtLink
+                :to="`/admin/users/${u.id}`"
+                class="font-medium text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] transition-colors"
               >
-                <UIcon name="i-heroicons-shield-check" class="text-xs" />
-                2FA
+                {{ u.email }}
+              </NuxtLink>
+            </TableCell>
+            <TableCell>
+              <span class="text-[hsl(var(--muted-foreground))]">
+                {{ [u.firstName, u.lastName].filter(Boolean).join(' ') || '---' }}
               </span>
-              <span
-                v-if="row.original.passkeysCount > 0"
-                class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                :title="`${row.original.passkeysCount} passkey(s)`"
-              >
-                <UIcon name="i-heroicons-finger-print" class="text-xs" />
-                {{ row.original.passkeysCount }}
-              </span>
-            </div>
-          </div>
-        </template>
-
-        <template #status-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <span
-              class="w-2 h-2 rounded-full"
-              :class="row.original.isActive ? 'bg-green-600 dark:bg-green-400' : 'bg-red-500 dark:bg-red-400'"
-            />
-            <span
-              class="text-sm"
-              :class="row.original.isActive ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'"
-            >
-              {{ row.original.isActive ? 'Active' : 'Inactive' }}
-            </span>
-          </div>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-pencil"
-              title="Edit user"
-              @click="openEdit(row.original)"
-            />
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-shield-check"
-              title="Change auth method"
-              @click="openAuthMethodModal(row.original)"
-            />
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
-              title="Delete user"
-              @click="deleteUser(row.original)"
-            />
-          </div>
-        </template>
-      </UTable>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full" :class="getRoleDotClass(u.role)" />
+                <span class="text-sm capitalize" :class="getRoleTextClass(u.role)">
+                  {{ u.role }}
+                </span>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <component
+                    :is="getAuthMethodIconComponent(u.authMethod)"
+                    class="h-4 w-4 text-[hsl(var(--muted-foreground))]"
+                  />
+                  <span class="text-sm text-[hsl(var(--muted-foreground))]">
+                    {{ getAuthMethodLabel(u.authMethod) }}
+                  </span>
+                </div>
+                <!-- Auth badges -->
+                <div class="flex items-center gap-1">
+                  <span
+                    v-if="u.hasTOTP"
+                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                    title="TOTP enabled"
+                  >
+                    <ShieldCheck class="h-3 w-3" />
+                    2FA
+                  </span>
+                  <span
+                    v-if="u.passkeysCount > 0"
+                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                    :title="`${u.passkeysCount} passkey(s)`"
+                  >
+                    <Fingerprint class="h-3 w-3" />
+                    {{ u.passkeysCount }}
+                  </span>
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full"
+                  :class="u.isActive ? 'bg-[hsl(var(--accent))]' : 'bg-[hsl(var(--destructive))]'"
+                />
+                <span
+                  class="text-sm"
+                  :class="u.isActive ? 'text-[hsl(var(--accent-foreground))]' : 'text-[hsl(var(--destructive))]'"
+                >
+                  {{ u.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Edit user"
+                  @click="openEdit(u)"
+                >
+                  <Pencil class="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Change auth method"
+                  @click="openAuthMethodModal(u)"
+                >
+                  <ShieldCheck class="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Delete user"
+                  @click="deleteUser(u)"
+                >
+                  <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-stone-200 dark:border-stone-800">
-        <p class="text-sm text-stone-500 dark:text-stone-400">
-          Showing {{ ((page - 1) * pageSize) + 1 }}–{{ Math.min(page * pageSize, filteredUsers.length) }} of {{ filteredUsers.length }}
+      <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-[hsl(var(--border))]">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+          Showing {{ ((page - 1) * pageSize) + 1 }}--{{ Math.min(page * pageSize, filteredUsers.length) }} of {{ filteredUsers.length }}
         </p>
-        <UPagination
-          v-model:page="page"
-          :total="filteredUsers.length"
-          :items-per-page="pageSize"
-        />
+        <Pagination :total="totalPages" :sibling-count="1" :default-page="page" @update:page="page = $event">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       <!-- Empty state -->
-      <div v-if="filteredUsers.length === 0 && status !== 'pending'" class="text-center py-12 border-t border-stone-200 dark:border-stone-800">
-        <UIcon name="i-heroicons-users" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-        <p v-if="debouncedSearch" class="text-stone-500 dark:text-stone-400">No users found.</p>
+      <div v-if="filteredUsers.length === 0 && status !== 'pending'" class="text-center py-12 border-t border-[hsl(var(--border))]">
+        <Users class="w-9 h-9 text-[hsl(var(--muted-foreground))] mx-auto mb-3" />
+        <p v-if="debouncedSearch" class="text-[hsl(var(--muted-foreground))]">No users found.</p>
         <template v-else>
-          <p class="text-stone-500 dark:text-stone-400">No users yet.</p>
-          <UButton
-            variant="soft"
-            color="neutral"
-            icon="i-heroicons-plus"
+          <p class="text-[hsl(var(--muted-foreground))]">No users yet.</p>
+          <Button
+            variant="outline"
             class="mt-4"
             @click="showInviteModal = true"
           >
+            <Plus class="h-4 w-4 mr-2" />
             Add your first user
-          </UButton>
+          </Button>
         </template>
       </div>
     </div>
 
     <!-- Invite Modal -->
-    <UModal v-model:open="showInviteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Add User</h3>
-          <form class="space-y-4" @submit.prevent="inviteUser">
-            <div class="grid grid-cols-2 gap-4">
-              <UFormField label="Email" required>
-                <UInput v-model="inviteForm.email" type="email" class="w-full" />
-              </UFormField>
-              <UFormField label="Role">
-                <USelectMenu v-model="inviteForm.role" :items="roleOptions" value-key="value" class="w-full" />
-              </UFormField>
+    <Dialog v-model:open="showInviteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add User</DialogTitle>
+        </DialogHeader>
+        <form class="space-y-4" @submit.prevent="inviteUser">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label for="invite-email">Email <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="invite-email" v-model="inviteForm.email" type="email" class="w-full" />
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <UFormField label="First Name">
-                <UInput v-model="inviteForm.firstName" class="w-full" />
-              </UFormField>
-              <UFormField label="Last Name">
-                <UInput v-model="inviteForm.lastName" class="w-full" />
-              </UFormField>
+            <div class="space-y-2">
+              <Label for="invite-role">Role</Label>
+              <Select v-model="inviteForm.role">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in roleOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <UFormField label="Temporary Password" required>
-              <UInput v-model="inviteForm.password" type="password" class="w-full" />
-            </UFormField>
-            <div class="flex justify-end gap-2">
-              <UButton variant="ghost" color="neutral" @click="showInviteModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Create User</UButton>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label for="invite-first">First Name</Label>
+              <Input id="invite-first" v-model="inviteForm.firstName" class="w-full" />
             </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+            <div class="space-y-2">
+              <Label for="invite-last">Last Name</Label>
+              <Input id="invite-last" v-model="inviteForm.lastName" class="w-full" />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <Label for="invite-password">Temporary Password <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="invite-password" v-model="inviteForm.password" type="password" class="w-full" />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" @click="showInviteModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Create User
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Edit Modal -->
-    <UModal v-model:open="showEditModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit User</h3>
-          <form class="space-y-4" @submit.prevent="saveEdit">
-            <div class="grid grid-cols-2 gap-4">
-              <UFormField label="Email">
-                <UInput v-model="editForm.email" type="email" class="w-full" />
-              </UFormField>
-              <UFormField label="Role">
-                <USelectMenu v-model="editForm.role" :items="roleOptions" value-key="value" class="w-full" />
-              </UFormField>
+    <Dialog v-model:open="showEditModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+        </DialogHeader>
+        <form class="space-y-4" @submit.prevent="saveEdit">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label for="edit-email">Email</Label>
+              <Input id="edit-email" v-model="editForm.email" type="email" class="w-full" />
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <UFormField label="First Name">
-                <UInput v-model="editForm.firstName" class="w-full" />
-              </UFormField>
-              <UFormField label="Last Name">
-                <UInput v-model="editForm.lastName" class="w-full" />
-              </UFormField>
+            <div class="space-y-2">
+              <Label for="edit-role">Role</Label>
+              <Select v-model="editForm.role">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in roleOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div class="flex items-center gap-2">
-              <USwitch v-model="editForm.isActive" />
-              <span class="text-sm text-stone-700 dark:text-stone-300">Active</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label for="edit-first">First Name</Label>
+              <Input id="edit-first" v-model="editForm.firstName" class="w-full" />
             </div>
-            <div class="flex justify-end gap-2">
-              <UButton variant="ghost" color="neutral" @click="showEditModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Save</UButton>
+            <div class="space-y-2">
+              <Label for="edit-last">Last Name</Label>
+              <Input id="edit-last" v-model="editForm.lastName" class="w-full" />
             </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          </div>
+          <div class="flex items-center gap-2">
+            <Switch v-model:checked="editForm.isActive" />
+            <span class="text-sm text-[hsl(var(--foreground))]">Active</span>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" @click="showEditModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Auth Method Modal -->
-    <UModal v-model:open="showAuthMethodModal">
-      <template #content>
-        <div class="p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/20">
-              <UIcon name="i-heroicons-shield-check" class="text-xl text-amber-600 dark:text-amber-500" />
+    <Dialog v-model:open="showAuthMethodModal">
+      <DialogContent>
+        <DialogHeader>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-[hsl(var(--accent))]">
+              <ShieldCheck class="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Change Auth Method</h3>
-              <p class="text-sm text-stone-500 dark:text-stone-400">
+              <DialogTitle>Change Auth Method</DialogTitle>
+              <p class="text-sm text-[hsl(var(--muted-foreground))]">
                 {{ selectedUser?.email }}
               </p>
             </div>
           </div>
+        </DialogHeader>
 
-          <form class="space-y-4" @submit.prevent="saveAuthMethod">
-            <UFormField label="Authentication Method">
-              <USelectMenu
-                v-model="authMethodForm.authMethod"
-                :items="authMethodOptions"
-                value-key="value"
-                class="w-full"
-              />
-            </UFormField>
+        <form class="space-y-4" @submit.prevent="saveAuthMethod">
+          <div class="space-y-2">
+            <Label>Authentication Method</Label>
+            <Select v-model="authMethodForm.authMethod">
+              <SelectTrigger>
+                <SelectValue placeholder="Select method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in authMethodOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div class="flex items-center gap-2">
-              <USwitch v-model="authMethodForm.removePassword" />
-              <div>
-                <span class="text-sm text-stone-700 dark:text-stone-300">Remove password</span>
-                <p class="text-xs text-stone-400 dark:text-stone-500">
-                  Forces passwordless-only authentication
-                </p>
-              </div>
+          <div class="flex items-center gap-2">
+            <Switch v-model:checked="authMethodForm.removePassword" />
+            <div>
+              <span class="text-sm text-[hsl(var(--foreground))]">Remove password</span>
+              <p class="text-xs text-[hsl(var(--muted-foreground))]">
+                Forces passwordless-only authentication
+              </p>
             </div>
+          </div>
 
-            <UAlert
-              v-if="authMethodForm.removePassword"
-              color="warning"
-              variant="subtle"
-              icon="i-heroicons-exclamation-triangle"
-              title="This will permanently remove the user's password. They will only be able to sign in using passwordless methods."
-            />
+          <Alert v-if="authMethodForm.removePassword" variant="destructive">
+            <AlertTriangle class="h-4 w-4" />
+            <AlertTitle>This will permanently remove the user's password. They will only be able to sign in using passwordless methods.</AlertTitle>
+          </Alert>
 
-            <div class="flex justify-between pt-2">
-              <div class="flex gap-2">
-                <UButton
-                  size="sm"
-                  variant="soft"
-                  icon="i-heroicons-envelope"
-                  @click="forcePasswordless(selectedUser!); showAuthMethodModal = false"
-                >
-                  Force Passwordless
-                </UButton>
-                <UButton
-                  size="sm"
-                  variant="soft"
-                  color="neutral"
-                  icon="i-heroicons-arrow-path"
-                  @click="resetAuthMethod(selectedUser!); showAuthMethodModal = false"
-                >
-                  Reset to Password
-                </UButton>
-              </div>
-              <div class="flex gap-2">
-                <UButton variant="ghost" color="neutral" @click="showAuthMethodModal = false">Cancel</UButton>
-                <UButton type="submit" color="neutral" :loading="isSubmitting">Save</UButton>
-              </div>
+          <div class="flex justify-between pt-2">
+            <div class="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                @click="forcePasswordless(selectedUser!); showAuthMethodModal = false"
+              >
+                <Mail class="h-4 w-4 mr-2" />
+                Force Passwordless
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                @click="resetAuthMethod(selectedUser!); showAuthMethodModal = false"
+              >
+                <RefreshCw class="h-4 w-4 mr-2" />
+                Reset to Password
+              </Button>
             </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+            <div class="flex gap-2">
+              <Button variant="ghost" @click="showAuthMethodModal = false">Cancel</Button>
+              <Button type="submit" :disabled="isSubmitting">
+                <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+                Save
+              </Button>
+            </div>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { ArrowLeft, RefreshCw, File, FileText, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Card, CardContent } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
 })
 
-const toast = useToast()
+const { toast } = useToast()
 
 // Step state
 const step = ref(1)
@@ -48,12 +54,12 @@ async function createPage() {
       },
     })
 
-    toast.add({ title: 'Page created', color: 'success' })
+    toast({ title: 'Page created' })
     await navigateTo(`/admin/pages/${result.data.id}`)
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || e?.data?.error?.message || 'Failed to create page'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isCreating.value = false
@@ -68,13 +74,12 @@ async function createPage() {
       <!-- Page header -->
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-heroicons-arrow-left"
-            to="/admin/pages"
-          />
-          <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+          <Button variant="ghost" as-child>
+            <NuxtLink to="/admin/pages">
+              <ArrowLeft class="h-4 w-4" />
+            </NuxtLink>
+          </Button>
+          <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
             Create New Page
           </h2>
         </div>
@@ -82,42 +87,41 @@ async function createPage() {
 
       <!-- Loading state -->
       <div v-if="pageTypesStatus === 'pending'" class="flex items-center justify-center py-12">
-        <UIcon name="i-heroicons-arrow-path" class="text-2xl animate-spin text-stone-400" />
+        <RefreshCw class="h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))]" />
       </div>
 
       <!-- Page types grid -->
       <div v-else-if="pageTypes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <UCard
+        <Card
           v-for="pageType in pageTypes"
           :key="pageType.name"
           class="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
           :class="{ 'ring-2 ring-primary': selectedPageType?.name === pageType.name }"
           @click="selectPageType(pageType)"
         >
-          <div class="flex items-start gap-3">
-            <UIcon :name="pageType.icon || 'i-heroicons-document'" class="text-2xl text-stone-600 dark:text-stone-400 mt-0.5" />
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-stone-900 dark:text-stone-100">
-                {{ pageType.displayName }}
-              </p>
-              <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
-                {{ pageType.description || 'No description' }}
-              </p>
-              <p class="text-xs text-stone-400 dark:text-stone-500 mt-2">
-                {{ Object.keys(pageType.areas || {}).length }} areas
-              </p>
+          <CardContent class="pt-6">
+            <div class="flex items-start gap-3">
+              <File class="h-6 w-6 text-[hsl(var(--muted-foreground))] mt-0.5" />
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-[hsl(var(--foreground))]">
+                  {{ pageType.displayName }}
+                </p>
+                <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                  {{ pageType.description || 'No description' }}
+                </p>
+                <p class="text-xs text-[hsl(var(--muted-foreground))] mt-2">
+                  {{ Object.keys(pageType.areas || {}).length }} areas
+                </p>
+              </div>
             </div>
-          </div>
-        </UCard>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Empty state -->
       <div v-else class="text-center py-12">
-        <UIcon
-          name="i-heroicons-document-text"
-          class="text-4xl text-stone-400 dark:text-stone-500 mb-3"
-        />
-        <p class="text-stone-500 dark:text-stone-400">No page types available.</p>
+        <FileText class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">No page types available.</p>
       </div>
     </div>
 
@@ -126,75 +130,69 @@ async function createPage() {
       <!-- Page header -->
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-heroicons-arrow-left"
-            @click="goBack"
-          />
-          <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+          <Button variant="ghost" @click="goBack">
+            <ArrowLeft class="h-4 w-4" />
+          </Button>
+          <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
             Page Details
           </h2>
         </div>
       </div>
 
       <!-- Selected page type info -->
-      <div class="mb-6 p-4 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center gap-3">
-        <UIcon :name="selectedPageType?.icon || 'i-heroicons-document'" class="text-xl text-stone-600 dark:text-stone-400" />
+      <div class="mb-6 p-4 rounded-lg bg-[hsl(var(--muted))] flex items-center gap-3">
+        <File class="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
         <div>
-          <p class="font-medium text-stone-900 dark:text-stone-100">
+          <p class="font-medium text-[hsl(var(--foreground))]">
             {{ selectedPageType?.displayName }}
           </p>
-          <p class="text-sm text-stone-500 dark:text-stone-400">
+          <p class="text-sm text-[hsl(var(--muted-foreground))]">
             {{ selectedPageType?.description || 'No description' }}
           </p>
         </div>
       </div>
 
       <!-- Form -->
-      <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+      <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
         <form @submit.prevent="createPage" class="space-y-5">
           <!-- Title -->
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-              Title <span class="text-red-500">*</span>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-[hsl(var(--foreground))]">
+              Title <span class="text-[hsl(var(--destructive))]">*</span>
             </label>
-            <UInput
+            <Input
               v-model="title"
               placeholder="Enter page title"
-              size="lg"
               :disabled="isCreating"
             />
           </div>
 
           <!-- Auto-generated slug -->
           <div v-if="slug">
-            <label class="block text-sm font-medium text-stone-500 dark:text-stone-400 mb-1">
+            <label class="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">
               Slug
             </label>
-            <p class="font-mono text-sm text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 px-3 py-2 rounded">
+            <p class="font-mono text-sm text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-3 py-2 rounded">
               {{ slug }}
             </p>
           </div>
 
           <!-- Actions -->
           <div class="flex items-center gap-3 pt-4">
-            <UButton
+            <Button
               type="submit"
-              color="primary"
-              :loading="isCreating"
-              :disabled="!title.trim()"
+              :disabled="!title.trim() || isCreating"
             >
+              <Loader2 v-if="isCreating" class="h-4 w-4 mr-2 animate-spin" />
               Create Page
-            </UButton>
-            <UButton
+            </Button>
+            <Button
               variant="ghost"
-              color="neutral"
               @click="goBack"
               :disabled="isCreating"
             >
               Back
-            </UButton>
+            </Button>
           </div>
         </form>
       </div>

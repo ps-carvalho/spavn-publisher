@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import type { FieldConfig, ContentTypeOptions } from '~~/lib/publisher/types'
+import { ArrowLeft, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
 })
 
-const toast = useToast()
+const { toast } = useToast()
 const router = useRouter()
 const isSaving = ref(false)
 
@@ -44,17 +50,17 @@ function slugify(str: string): string {
 
 async function save() {
   if (!formData.value.displayName.trim()) {
-    toast.add({ title: 'Display name is required', color: 'error' })
+    toast({ title: 'Display name is required', variant: 'destructive' })
     return
   }
 
   if (!formData.value.name.trim()) {
-    toast.add({ title: 'Name is required', color: 'error' })
+    toast({ title: 'Name is required', variant: 'destructive' })
     return
   }
 
   if (!formData.value.pluralName.trim()) {
-    toast.add({ title: 'Plural name is required', color: 'error' })
+    toast({ title: 'Plural name is required', variant: 'destructive' })
     return
   }
 
@@ -76,12 +82,12 @@ async function save() {
       body,
     })
 
-    toast.add({ title: 'Content type created', color: 'success' })
+    toast({ title: 'Content type created' })
     await router.push('/admin/types')
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to create content type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSaving.value = false
@@ -94,13 +100,12 @@ async function save() {
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <UButton
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-left"
-          to="/admin/types"
-        />
-        <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+        <Button variant="ghost" as-child>
+          <NuxtLink to="/admin/types">
+            <ArrowLeft class="h-4 w-4" />
+          </NuxtLink>
+        </Button>
+        <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
           New Content Type
         </h2>
       </div>
@@ -110,66 +115,73 @@ async function save() {
       <!-- Main form -->
       <div class="lg:col-span-3 space-y-6">
         <!-- Basic info -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Basic Information</h3>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Basic Information</h3>
 
           <div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput
+              <div class="space-y-2">
+                <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+                <Input
                   v-model="formData.displayName"
                   placeholder="e.g., Article, Product, Author"
                 />
-              </UFormField>
+              </div>
 
-              <UFormField label="Icon Class">
-                <UInput
+              <div class="space-y-2">
+                <Label>Icon Class</Label>
+                <Input
                   v-model="formData.icon"
-                  placeholder="e.g., i-heroicons-document-text"
+                  placeholder="e.g., FileText"
                 />
-              </UFormField>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="API Name" required hint="Used in API routes">
-                <UInput
+              <div class="space-y-2">
+                <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+                <Input
                   v-model="formData.name"
                   placeholder="e.g., article"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Used in API routes</p>
+              </div>
 
-              <UFormField label="Plural Name" required hint="API endpoint name">
-                <UInput
+              <div class="space-y-2">
+                <Label>Plural Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+                <Input
                   v-model="formData.pluralName"
                   placeholder="e.g., articles"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">API endpoint name</p>
+              </div>
             </div>
 
-            <UFormField label="Description">
-              <UTextarea
+            <div class="space-y-2">
+              <Label>Description</Label>
+              <Textarea
                 v-model="formData.description"
                 placeholder="What is this content type for?"
                 :rows="3"
               />
-            </UFormField>
+            </div>
           </div>
         </div>
 
         <!-- Options -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Options</h3>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Options</h3>
 
           <div class="space-y-3">
             <label class="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 v-model="formData.options.draftAndPublish"
-                class="rounded border-stone-300 dark:border-stone-600"
+                class="rounded border-[hsl(var(--border))]"
               />
               <div>
-                <span class="text-sm font-medium text-stone-900 dark:text-stone-100">Draft & Publish</span>
-                <p class="text-xs text-stone-500 dark:text-stone-400">Add status and publishedAt fields</p>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Draft & Publish</span>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Add status and publishedAt fields</p>
               </div>
             </label>
 
@@ -177,11 +189,11 @@ async function save() {
               <input
                 type="checkbox"
                 v-model="formData.options.timestamps"
-                class="rounded border-stone-300 dark:border-stone-600"
+                class="rounded border-[hsl(var(--border))]"
               />
               <div>
-                <span class="text-sm font-medium text-stone-900 dark:text-stone-100">Timestamps</span>
-                <p class="text-xs text-stone-500 dark:text-stone-400">Add createdAt and updatedAt fields</p>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Timestamps</span>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Add createdAt and updatedAt fields</p>
               </div>
             </label>
 
@@ -189,19 +201,19 @@ async function save() {
               <input
                 type="checkbox"
                 v-model="formData.options.softDelete"
-                class="rounded border-stone-300 dark:border-stone-600"
+                class="rounded border-[hsl(var(--border))]"
               />
               <div>
-                <span class="text-sm font-medium text-stone-900 dark:text-stone-100">Soft Delete</span>
-                <p class="text-xs text-stone-500 dark:text-stone-400">Add deletedAt field, filter deleted from API</p>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Soft Delete</span>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Add deletedAt field, filter deleted from API</p>
               </div>
             </label>
           </div>
         </div>
 
         <!-- Fields -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Fields</h3>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Fields</h3>
           <PublisherFieldEditor v-model="formData.fields" mode="content" />
         </div>
       </div>
@@ -209,41 +221,39 @@ async function save() {
       <!-- Sidebar -->
       <div class="space-y-4">
         <!-- Actions -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
           <div class="space-y-3">
-            <UButton block color="neutral" @click="save" :loading="isSaving">
+            <Button class="w-full" variant="outline" @click="save" :disabled="isSaving">
+              <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
               Create Content Type
-            </UButton>
-            <UButton
-              block
-              variant="ghost"
-              color="neutral"
-              to="/admin/types"
-            >
-              Cancel
-            </UButton>
+            </Button>
+            <Button class="w-full" variant="ghost" as-child>
+              <NuxtLink to="/admin/types">
+                Cancel
+              </NuxtLink>
+            </Button>
           </div>
         </div>
 
         <!-- API Preview -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">API Preview</h4>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">API Preview</h4>
           <div class="space-y-2 text-sm">
             <div>
-              <span class="text-stone-500 dark:text-stone-400">List:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">List:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 GET /api/v1/{{ formData.pluralName || 'items' }}
               </code>
             </div>
             <div>
-              <span class="text-stone-500 dark:text-stone-400">Create:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">Create:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 POST /api/v1/{{ formData.pluralName || 'items' }}
               </code>
             </div>
             <div>
-              <span class="text-stone-500 dark:text-stone-400">Get:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">Get:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 GET /api/v1/{{ formData.pluralName || 'items' }}/:id
               </code>
             </div>

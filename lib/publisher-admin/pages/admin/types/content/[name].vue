@@ -1,5 +1,14 @@
 <script setup lang="ts">
 import type { FieldConfig, ContentTypeOptions } from '~~/lib/publisher/types'
+import { ArrowLeft, Trash2, AlertTriangle, RefreshCw, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Alert, AlertTitle, AlertDescription } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
@@ -8,7 +17,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { toast } = useToast()
 const isSaving = ref(false)
 const showDeleteModal = ref(false)
 const isDeleting = ref(false)
@@ -54,7 +63,7 @@ watch(contentType, (ct) => {
 
 async function save() {
   if (!formData.value.displayName.trim()) {
-    toast.add({ title: 'Display name is required', color: 'error' })
+    toast({ title: 'Display name is required', variant: 'destructive' })
     return
   }
 
@@ -79,16 +88,15 @@ async function save() {
     // Show migration results if any
     const migration = (result as any)?.migration
     if (migration?.added?.length > 0 || migration?.warnings?.length > 0) {
-      toast.add({
+      toast({
         title: 'Content type updated',
         description: migration.added?.length > 0
           ? `Added columns: ${migration.added.join(', ')}`
           : undefined,
-        color: 'success',
       })
     }
     else {
-      toast.add({ title: 'Content type updated', color: 'success' })
+      toast({ title: 'Content type updated' })
     }
 
     // If name changed, redirect to new URL
@@ -101,7 +109,7 @@ async function save() {
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to update content type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSaving.value = false
@@ -113,12 +121,12 @@ async function deleteType() {
 
   try {
     await $fetch(`/api/publisher/types/${typeName.value}`, { method: 'DELETE' })
-    toast.add({ title: 'Content type deleted', color: 'success' })
+    toast({ title: 'Content type deleted' })
     await router.push('/admin/types')
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to delete content type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isDeleting.value = false
@@ -132,18 +140,17 @@ async function deleteType() {
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <UButton
-          variant="ghost"
-          color="neutral"
-          icon="i-heroicons-arrow-left"
-          to="/admin/types"
-        />
-        <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+        <Button variant="ghost" as-child>
+          <NuxtLink to="/admin/types">
+            <ArrowLeft class="h-4 w-4" />
+          </NuxtLink>
+        </Button>
+        <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
           Edit {{ contentType.displayName }}
         </h2>
-        <UBadge v-if="contentType.isSystem" color="info" variant="subtle">
+        <Badge v-if="contentType.isSystem" variant="secondary">
           System
-        </UBadge>
+        </Badge>
       </div>
     </div>
 
@@ -151,75 +158,80 @@ async function deleteType() {
       <!-- Main form -->
       <div class="lg:col-span-3 space-y-6">
         <!-- Warning banner -->
-        <UAlert
-          color="warning"
-          variant="subtle"
-          icon="i-heroicons-exclamation-triangle"
-          title="Schema Changes"
-          description="Adding fields is safe. Removing fields hides them from the API but data is preserved."
-        />
+        <Alert variant="destructive">
+          <AlertTriangle class="h-4 w-4" />
+          <AlertTitle>Schema Changes</AlertTitle>
+          <AlertDescription>Adding fields is safe. Removing fields hides them from the API but data is preserved.</AlertDescription>
+        </Alert>
 
         <!-- Basic info -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Basic Information</h3>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Basic Information</h3>
 
           <div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput
+              <div class="space-y-2">
+                <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+                <Input
                   v-model="formData.displayName"
                   placeholder="e.g., Article, Product, Author"
                 />
-              </UFormField>
+              </div>
 
-              <UFormField label="Icon Class">
-                <UInput
+              <div class="space-y-2">
+                <Label>Icon Class</Label>
+                <Input
                   v-model="formData.icon"
-                  placeholder="e.g., i-heroicons-document-text"
+                  placeholder="e.g., FileText"
                 />
-              </UFormField>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="API Name" required hint="Used in API routes">
-                <UInput
+              <div class="space-y-2">
+                <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+                <Input
                   v-model="formData.name"
                   placeholder="e.g., article"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Used in API routes</p>
+              </div>
 
-              <UFormField label="Plural Name" required hint="API endpoint name">
-                <UInput
+              <div class="space-y-2">
+                <Label>Plural Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+                <Input
                   v-model="formData.pluralName"
                   placeholder="e.g., articles"
                 />
-              </UFormField>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">API endpoint name</p>
+              </div>
             </div>
 
-            <UFormField label="Description">
-              <UTextarea
+            <div class="space-y-2">
+              <Label>Description</Label>
+              <Textarea
                 v-model="formData.description"
                 placeholder="What is this content type for?"
                 :rows="3"
               />
-            </UFormField>
+            </div>
           </div>
         </div>
 
         <!-- Options -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Options</h3>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Options</h3>
 
           <div class="space-y-3">
             <label class="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 v-model="formData.options.draftAndPublish"
-                class="rounded border-stone-300 dark:border-stone-600"
+                class="rounded border-[hsl(var(--border))]"
               />
               <div>
-                <span class="text-sm font-medium text-stone-900 dark:text-stone-100">Draft & Publish</span>
-                <p class="text-xs text-stone-500 dark:text-stone-400">Add status and publishedAt fields</p>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Draft & Publish</span>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Add status and publishedAt fields</p>
               </div>
             </label>
 
@@ -227,11 +239,11 @@ async function deleteType() {
               <input
                 type="checkbox"
                 v-model="formData.options.timestamps"
-                class="rounded border-stone-300 dark:border-stone-600"
+                class="rounded border-[hsl(var(--border))]"
               />
               <div>
-                <span class="text-sm font-medium text-stone-900 dark:text-stone-100">Timestamps</span>
-                <p class="text-xs text-stone-500 dark:text-stone-400">Add createdAt and updatedAt fields</p>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Timestamps</span>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Add createdAt and updatedAt fields</p>
               </div>
             </label>
 
@@ -239,19 +251,19 @@ async function deleteType() {
               <input
                 type="checkbox"
                 v-model="formData.options.softDelete"
-                class="rounded border-stone-300 dark:border-stone-600"
+                class="rounded border-[hsl(var(--border))]"
               />
               <div>
-                <span class="text-sm font-medium text-stone-900 dark:text-stone-100">Soft Delete</span>
-                <p class="text-xs text-stone-500 dark:text-stone-400">Add deletedAt field, filter deleted from API</p>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Soft Delete</span>
+                <p class="text-xs text-[hsl(var(--muted-foreground))]">Add deletedAt field, filter deleted from API</p>
               </div>
             </label>
           </div>
         </div>
 
         <!-- Fields -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Fields</h3>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Fields</h3>
           <PublisherFieldEditor v-model="formData.fields" mode="content" />
         </div>
       </div>
@@ -259,60 +271,57 @@ async function deleteType() {
       <!-- Sidebar -->
       <div class="space-y-4">
         <!-- Actions -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
           <div class="space-y-3">
-            <UButton block color="neutral" @click="save" :loading="isSaving">
+            <Button class="w-full" variant="outline" @click="save" :disabled="isSaving">
+              <Loader2 v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
               Save Changes
-            </UButton>
-            <UButton
-              block
-              variant="ghost"
-              color="neutral"
-              to="/admin/types"
-            >
-              Cancel
-            </UButton>
+            </Button>
+            <Button class="w-full" variant="ghost" as-child>
+              <NuxtLink to="/admin/types">
+                Cancel
+              </NuxtLink>
+            </Button>
 
-            <hr class="border-stone-200 dark:border-stone-700 my-4" />
+            <hr class="border-[hsl(var(--border))] my-4" />
 
-            <UButton
+            <Button
               v-if="!contentType.isSystem"
-              block
+              class="w-full"
               variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
               @click="showDeleteModal = true"
             >
+              <Trash2 class="h-4 w-4 mr-2 text-[hsl(var(--destructive))]" />
               Delete Content Type
-            </UButton>
+            </Button>
           </div>
         </div>
 
         <!-- API Preview -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">API Endpoints</h4>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">API Endpoints</h4>
           <div class="space-y-2 text-sm">
             <div>
-              <span class="text-stone-500 dark:text-stone-400">List:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">List:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 GET /api/v1/{{ formData.pluralName || 'items' }}
               </code>
             </div>
             <div>
-              <span class="text-stone-500 dark:text-stone-400">Create:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">Create:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 POST /api/v1/{{ formData.pluralName || 'items' }}
               </code>
             </div>
             <div>
-              <span class="text-stone-500 dark:text-stone-400">Get:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">Get:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 GET /api/v1/{{ formData.pluralName || 'items' }}/:id
               </code>
             </div>
             <div>
-              <span class="text-stone-500 dark:text-stone-400">Update:</span>
-              <code class="ml-2 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
+              <span class="text-[hsl(var(--muted-foreground))]">Update:</span>
+              <code class="ml-2 text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
                 PATCH /api/v1/{{ formData.pluralName || 'items' }}/:id
               </code>
             </div>
@@ -320,16 +329,16 @@ async function deleteType() {
         </div>
 
         <!-- Field count -->
-        <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6">
-          <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Statistics</h4>
+        <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6">
+          <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Statistics</h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-stone-500 dark:text-stone-400">Fields</span>
-              <span class="font-medium text-stone-900 dark:text-stone-100">{{ Object.keys(formData.fields).length }}</span>
+              <span class="text-[hsl(var(--muted-foreground))]">Fields</span>
+              <span class="font-medium text-[hsl(var(--foreground))]">{{ Object.keys(formData.fields).length }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-stone-500 dark:text-stone-400">Required</span>
-              <span class="font-medium text-stone-900 dark:text-stone-100">
+              <span class="text-[hsl(var(--muted-foreground))]">Required</span>
+              <span class="font-medium text-[hsl(var(--foreground))]">
                 {{ Object.values(formData.fields).filter(f => f.required).length }}
               </span>
             </div>
@@ -339,25 +348,28 @@ async function deleteType() {
     </div>
 
     <!-- Delete confirmation -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">Delete Content Type</h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete <span class="font-medium text-stone-700 dark:text-stone-300">{{ contentType.displayName }}</span>?
-            This will disable the type but preserve existing data in the database.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">Cancel</UButton>
-            <UButton color="error" :loading="isDeleting" @click="deleteType">Delete</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Content Type</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete <span class="font-medium text-[hsl(var(--foreground))]">{{ contentType.displayName }}</span>?
+          This will disable the type but preserve existing data in the database.
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">Cancel</Button>
+          <Button variant="destructive" :disabled="isDeleting" @click="deleteType">
+            <Loader2 v-if="isDeleting" class="h-4 w-4 mr-2 animate-spin" />
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 
   <!-- Loading state -->
   <div v-else class="text-center py-12">
-    <UIcon name="i-heroicons-arrow-path" class="animate-spin text-2xl text-stone-400" />
+    <RefreshCw class="h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))] mx-auto" />
   </div>
 </template>

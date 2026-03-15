@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MediaItem } from '~~/lib/publisher-admin/types/media'
+import { RefreshCw, FolderOpen } from 'lucide-vue-next'
 
 interface FileGridProps {
   files: MediaItem[]
@@ -43,11 +44,10 @@ function handleFileDblClick(file: MediaItem, event: MouseEvent) {
       class="flex items-center justify-center h-64"
     >
       <div class="text-center">
-        <UIcon
-          name="i-heroicons-arrow-path"
-          class="w-8 h-8 text-stone-400 dark:text-stone-500 animate-spin mx-auto mb-2"
+        <RefreshCw
+          class="w-8 h-8 text-[hsl(var(--muted-foreground))] animate-spin mx-auto mb-2"
         />
-        <p class="text-sm text-stone-500 dark:text-stone-400">Loading files...</p>
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">Loading files...</p>
       </div>
     </div>
 
@@ -57,11 +57,10 @@ function handleFileDblClick(file: MediaItem, event: MouseEvent) {
       class="flex items-center justify-center h-64"
     >
       <div class="text-center">
-        <UIcon
-          name="i-heroicons-folder-open"
-          class="w-12 h-12 text-stone-300 dark:text-stone-600 mx-auto mb-3"
+        <FolderOpen
+          class="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-3"
         />
-        <p class="text-sm text-stone-500 dark:text-stone-400">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
           No files in this folder
         </p>
       </div>

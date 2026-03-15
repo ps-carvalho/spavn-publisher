@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { R2StorageConfig } from '~/server/utils/publisher/storage/types'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
 
 // ─── Model ─────────────────────────────────────────────────────────────────────
 
@@ -46,84 +50,75 @@ if (!config.value.region) {
 
 <template>
   <div class="space-y-4">
-    <UFormField
-      label="Account ID"
-      required
-      hint="Your Cloudflare account ID"
-      help="Found in the Cloudflare dashboard under R2 overview. This identifies your Cloudflare account."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="r2AccountId">Account ID <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Found in the Cloudflare dashboard under R2 overview. This identifies your Cloudflare account.</p>
+      <Input
+        id="r2AccountId"
         v-model="config.accountId"
         placeholder="your-account-id"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Bucket Name"
-      required
-      hint="R2 bucket name"
-      help="The name of your R2 bucket. Must match exactly as configured in Cloudflare R2."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="r2Bucket">Bucket Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The name of your R2 bucket. Must match exactly as configured in Cloudflare R2.</p>
+      <Input
+        id="r2Bucket"
         v-model="config.bucket"
         placeholder="my-bucket"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Access Key ID"
-      hint="R2 access key (or use R2_ACCESS_KEY_ID env var)"
-      help="Create an R2 API token in the Cloudflare dashboard. Can be omitted if set via environment variable."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="r2AccessKeyId">Access Key ID</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Create an R2 API token in the Cloudflare dashboard. Can be omitted if set via environment variable.</p>
+      <Input
+        id="r2AccessKeyId"
         v-model="config.accessKeyId"
         type="password"
         placeholder="R2 access key"
         autocomplete="off"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Secret Access Key"
-      hint="R2 secret key (or use R2_SECRET_ACCESS_KEY env var)"
-      help="The secret key from your R2 API token. Can be omitted if set via environment variable."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="r2SecretAccessKey">Secret Access Key</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The secret key from your R2 API token. Can be omitted if set via environment variable.</p>
+      <Input
+        id="r2SecretAccessKey"
         v-model="config.secretAccessKey"
         type="password"
         placeholder="R2 secret key"
         autocomplete="off"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Region"
-      hint="Usually 'auto' for automatic selection"
-      help="R2 uses 'auto' for automatic region selection. Override only if you need to target a specific region."
-    >
-      <USelect
-        v-model="config.region"
-        :items="regionOptions"
-      />
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Region</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">R2 uses 'auto' for automatic region selection. Override only if you need to target a specific region.</p>
+      <Select v-model="config.region">
+        <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in regionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
 
-    <UFormField
-      label="Custom Domain"
-      hint="Optional CDN domain for public URLs"
-      help="If you've configured a custom domain for your R2 bucket, enter it here to use it for public URLs instead of the default R2 public URL."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="r2CustomDomain">Custom Domain</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">If you've configured a custom domain for your R2 bucket, enter it here to use it for public URLs instead of the default R2 public URL.</p>
+      <Input
+        id="r2CustomDomain"
         v-model="config.customDomain"
         placeholder="https://cdn.example.com"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Public Bucket"
-      hint="Enable for public read access"
-      help="Enable if your R2 bucket has public access configured. This allows generating public URLs without signing."
-    >
-      <USwitch v-model:checked="config.public" />
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Public Bucket</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Enable if your R2 bucket has public access configured. This allows generating public URLs without signing.</p>
+      <Switch v-model:checked="config.public" />
+    </div>
   </div>
 </template>

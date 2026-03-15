@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { FolderTreeNodeWithCount } from '~~/lib/publisher-admin/types/media'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
 
 const props = defineProps<{
   open: boolean
@@ -24,32 +28,31 @@ function handleCreate() {
 </script>
 
 <template>
-  <UModal :open="open" @update:open="emit('update:open', $event)">
-    <template #content>
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
-          Create New Folder
-        </h3>
-        <p v-if="activeFolderId" class="text-sm text-stone-500 dark:text-stone-400 mb-3">
-          Inside: {{ folderBreadcrumb[folderBreadcrumb.length - 1]?.name || 'Current folder' }}
-        </p>
-        <UFormField label="Folder Name" required class="mb-4">
-          <UInput
-            v-model="newFolderName"
-            placeholder="Enter folder name"
-            autofocus
-            @keyup.enter="handleCreate"
-          />
-        </UFormField>
-        <div class="flex justify-end gap-3">
-          <UButton variant="ghost" color="neutral" @click="emit('update:open', false)">
-            Cancel
-          </UButton>
-          <UButton color="neutral" @click="handleCreate">
-            Create
-          </UButton>
-        </div>
+  <Dialog :open="open" @update:open="emit('update:open', $event)">
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Create New Folder</DialogTitle>
+      </DialogHeader>
+      <p v-if="activeFolderId" class="text-sm text-[hsl(var(--muted-foreground))]">
+        Inside: {{ folderBreadcrumb[folderBreadcrumb.length - 1]?.name || 'Current folder' }}
+      </p>
+      <div class="space-y-2">
+        <Label>Folder Name</Label>
+        <Input
+          v-model="newFolderName"
+          placeholder="Enter folder name"
+          autofocus
+          @keyup.enter="handleCreate"
+        />
       </div>
-    </template>
-  </UModal>
+      <DialogFooter>
+        <Button variant="ghost" @click="emit('update:open', false)">
+          Cancel
+        </Button>
+        <Button @click="handleCreate">
+          Create
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

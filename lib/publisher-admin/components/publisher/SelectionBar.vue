@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Button } from '@spavn/ui'
+
 // ─── Types ───────────────────────────────────────────────────────────
 
 interface SelectionBarProps {
@@ -56,38 +58,35 @@ const isConfirmDisabled = computed(() => {
 </script>
 
 <template>
-  <div class="flex-shrink-0 border-t border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 px-4 py-3">
+  <div class="flex-shrink-0 border-t border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3">
     <div class="flex items-center justify-between">
       <!-- Selection Info -->
-      <div class="text-sm text-stone-500 dark:text-stone-400 flex items-center gap-2">
+      <div class="text-sm text-[hsl(var(--muted-foreground))] flex items-center gap-2">
         <span>{{ selectionText }}</span>
-        <UButton
+        <Button
           v-if="hasSelection"
           variant="ghost"
-          color="neutral"
-          size="xs"
+          size="sm"
           @click="emit('clear')"
         >
           Clear
-        </UButton>
+        </Button>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2">
-        <UButton
+        <Button
           variant="ghost"
-          color="neutral"
           @click="emit('cancel')"
         >
           Cancel
-        </UButton>
-        <UButton
-          color="neutral"
+        </Button>
+        <Button
           :disabled="isConfirmDisabled"
           @click="emit('confirm')"
         >
           {{ confirmButtonText }}
-        </UButton>
+        </Button>
       </div>
     </div>
   </div>

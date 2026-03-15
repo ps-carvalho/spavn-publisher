@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+
 const props = defineProps<{
   fieldName: string
   fieldConfig: {
@@ -102,10 +108,17 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
 </script>
 
 <template>
-  <UFormField :label="label" :name="fieldName" :hint="fieldConfig.hint" :required="fieldConfig.required">
+  <div class="space-y-2">
+    <Label :for="fieldName">
+      {{ label }}
+      <span v-if="fieldConfig.required" class="text-[hsl(var(--destructive))]">*</span>
+    </Label>
+    <p v-if="fieldConfig.hint" class="text-xs text-[hsl(var(--muted-foreground))]">{{ fieldConfig.hint }}</p>
+
     <!-- String / Email -->
-    <UInput
+    <Input
       v-if="fieldConfig.type === 'string' || fieldConfig.type === 'email'"
+      :id="fieldName"
       v-model="stringValue"
       :type="fieldConfig.type === 'email' ? 'email' : 'text'"
       :placeholder="`Enter ${label.toLowerCase()}`"
@@ -114,8 +127,9 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Password -->
-    <UInput
+    <Input
       v-else-if="fieldConfig.type === 'password'"
+      :id="fieldName"
       v-model="stringValue"
       type="password"
       :placeholder="`Enter ${label.toLowerCase()}`"
@@ -123,8 +137,9 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Text -->
-    <UTextarea
+    <Textarea
       v-else-if="fieldConfig.type === 'text'"
+      :id="fieldName"
       v-model="stringValue"
       :placeholder="`Enter ${label.toLowerCase()}`"
       :rows="4"
@@ -132,8 +147,9 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Rich Text -->
-    <UTextarea
+    <Textarea
       v-else-if="fieldConfig.type === 'richtext'"
+      :id="fieldName"
       v-model="stringValue"
       :placeholder="`Enter ${label.toLowerCase()} (supports HTML/Markdown)`"
       :rows="8"
@@ -141,8 +157,9 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Number -->
-    <UInput
+    <Input
       v-else-if="fieldConfig.type === 'number'"
+      :id="fieldName"
       v-model="numberValue"
       type="number"
       :min="fieldConfig.min"
@@ -152,46 +169,51 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Boolean -->
-    <USwitch
+    <Switch
       v-else-if="fieldConfig.type === 'boolean'"
       v-model="booleanValue"
     />
 
     <!-- Date / DateTime -->
-    <UInput
+    <Input
       v-else-if="fieldConfig.type === 'date'"
+      :id="fieldName"
       v-model="stringValue"
       type="date"
       class="w-full"
     />
-    <UInput
+    <Input
       v-else-if="fieldConfig.type === 'datetime'"
+      :id="fieldName"
       v-model="stringValue"
       type="datetime-local"
       class="w-full"
     />
 
     <!-- UID / Slug -->
-    <UInput
+    <Input
       v-else-if="fieldConfig.type === 'uid'"
+      :id="fieldName"
       v-model="stringValue"
       :placeholder="'Auto-generated from ' + (fieldConfig.targetField || 'title')"
       class="w-full font-mono text-sm"
     />
 
     <!-- Enum -->
-    <USelectMenu
+    <Select
       v-else-if="fieldConfig.type === 'enum'"
       v-model="stringValue"
-      :items="(fieldConfig.options || []).map(o => ({ label: o, value: o }))"
-      value-key="value"
-      :placeholder="`Select ${label.toLowerCase()}`"
-      class="w-full"
-    />
+    >
+      <SelectTrigger class="w-full"><SelectValue :placeholder="`Select ${label.toLowerCase()}`" /></SelectTrigger>
+      <SelectContent>
+        <SelectItem v-for="o in (fieldConfig.options || [])" :key="o" :value="o">{{ o }}</SelectItem>
+      </SelectContent>
+    </Select>
 
     <!-- JSON -->
-    <UTextarea
+    <Textarea
       v-else-if="fieldConfig.type === 'json'"
+      :id="fieldName"
       v-model="jsonString"
       :placeholder="'{ }'"
       :rows="6"
@@ -210,8 +232,9 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Relation -->
-    <UInput
+    <Input
       v-else-if="fieldConfig.type === 'relation'"
+      :id="fieldName"
       v-model="numberValue"
       placeholder="Related ID"
       type="number"
@@ -219,11 +242,12 @@ const label = computed(() => props.fieldConfig.label || props.fieldName)
     />
 
     <!-- Fallback -->
-    <UInput
+    <Input
       v-else
+      :id="fieldName"
       v-model="stringValue"
       :placeholder="`Enter ${label.toLowerCase()}`"
       class="w-full"
     />
-  </UFormField>
+  </div>
 </template>

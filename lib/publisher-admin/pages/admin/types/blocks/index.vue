@@ -1,5 +1,16 @@
 <script setup lang="ts">
 import type { FieldConfig, BlockTypeConfig } from '~~/lib/publisher/types'
+import { Plus, Pencil, Trash2, LayoutGrid, Search, Loader2 } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@spavn/ui'
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
@@ -19,7 +30,7 @@ interface BlockTypeSummary {
   createdAt?: string
 }
 
-const toast = useToast()
+const { toast } = useToast()
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const selectedBlockType = ref<BlockTypeSummary | null>(null)
@@ -75,7 +86,7 @@ const filteredBlockTypes = computed(() => {
   let data = blockTypes.value
   if (debouncedSearch.value) {
     const query = debouncedSearch.value.toLowerCase()
-    data = data.filter(bt => 
+    data = data.filter(bt =>
       bt.displayName.toLowerCase().includes(query) ||
       bt.name.toLowerCase().includes(query) ||
       (bt.category && bt.category.toLowerCase().includes(query)) ||
@@ -91,19 +102,9 @@ const paginatedBlockTypes = computed(() => {
   return filteredBlockTypes.value.slice(start, start + pageSize)
 })
 
-const totalPages = computed(() => 
+const totalPages = computed(() =>
   Math.ceil(filteredBlockTypes.value.length / pageSize)
 )
-
-const columns = [
-  { accessorKey: 'icon', header: '' },
-  { accessorKey: 'displayName', header: 'Display Name' },
-  { accessorKey: 'category', header: 'Category' },
-  { accessorKey: 'name', header: 'API Name' },
-  { accessorKey: 'fieldCount', header: 'Fields' },
-  { accessorKey: 'status', header: 'Status' },
-  { id: 'actions', header: '' },
-]
 
 function resetForm() {
   form.value = {
@@ -136,7 +137,7 @@ function openEditModal(blockType: BlockTypeSummary) {
 
 async function createBlockType() {
   if (!form.value.displayName.trim() || !form.value.name.trim()) {
-    toast.add({ title: 'Name and display name are required', color: 'error' })
+    toast({ title: 'Name and display name are required', variant: 'destructive' })
     return
   }
 
@@ -157,11 +158,11 @@ async function createBlockType() {
 
     await refresh()
     showCreateModal.value = false
-    toast.add({ title: 'Block type created', color: 'success' })
+    toast({ title: 'Block type created' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to create block type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -188,11 +189,11 @@ async function updateBlockType() {
 
     await refresh()
     showEditModal.value = false
-    toast.add({ title: 'Block type updated', color: 'success' })
+    toast({ title: 'Block type updated' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to update block type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -212,11 +213,11 @@ async function deleteBlockType() {
   try {
     await $fetch(`/api/publisher/block-types/${selectedBlockType.value.name}`, { method: 'DELETE' })
     await refresh()
-    toast.add({ title: 'Block type deleted', color: 'success' })
+    toast({ title: 'Block type deleted' })
   }
   catch (e: any) {
     const message = e?.data?.data?.error?.message || 'Failed to delete block type'
-    toast.add({ title: message, color: 'error' })
+    toast({ title: message, variant: 'destructive' })
   }
   finally {
     isDeleting.value = false
@@ -227,14 +228,6 @@ async function deleteBlockType() {
 
 function getFieldCount(fields: Record<string, any> | undefined): number {
   return fields ? Object.keys(fields).length : 0
-}
-
-function getRows() {
-  return paginatedBlockTypes.value.map(bt => ({
-    ...bt,
-    icon: bt.icon || 'i-heroicons-squares-2x2',
-    fieldCount: getFieldCount(bt.fields),
-  }))
 }
 
 // Auto-generate name from displayName
@@ -257,250 +250,284 @@ function slugify(str: string): string {
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Block Types</h2>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
+        <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">Block Types</h2>
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">
           Reusable components for the page builder
         </p>
       </div>
-      <UButton icon="i-heroicons-plus" color="neutral" @click="openCreateModal">
+      <Button variant="outline" @click="openCreateModal">
+        <Plus class="h-4 w-4 mr-2" />
         Create Block Type
-      </UButton>
+      </Button>
     </div>
 
     <!-- Filter bar -->
     <div class="flex items-center gap-4 mb-4">
-      <UInput
-        v-model="search"
-        placeholder="Search block types..."
-        icon="i-heroicons-magnifying-glass"
-        class="w-64"
-      />
-    </div>
-
-    <!-- Table -->
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable
-        :data="getRows()"
-        :columns="columns"
-        :loading="status === 'pending'"
-      >
-        <template #icon-cell="{ row }">
-          <UIcon :name="row.original.icon" class="text-lg text-stone-500 dark:text-stone-400" />
-        </template>
-
-        <template #displayName-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <button
-              @click="openEditModal(row.original)"
-              class="font-medium text-stone-900 dark:text-stone-100 hover:text-blue-600 dark:hover:text-blue-400"
-            >
-              {{ row.original.displayName }}
-            </button>
-            <UBadge v-if="row.original.isSystem" color="info" variant="subtle" size="xs">
-              System
-            </UBadge>
-          </div>
-        </template>
-
-        <template #category-cell="{ row }">
-          <UBadge v-if="row.original.category" color="info" variant="subtle" size="xs">
-            {{ row.original.category }}
-          </UBadge>
-          <span v-else class="text-stone-400 dark:text-stone-500">—</span>
-        </template>
-
-        <template #name-cell="{ row }">
-          <code class="text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
-            {{ row.original.name }}
-          </code>
-        </template>
-
-        <template #fieldCount-cell="{ row }">
-          <span class="text-sm text-stone-600 dark:text-stone-400">
-            {{ row.original.fieldCount }} fields
-          </span>
-        </template>
-
-        <template #status-cell="{ row }">
-          <UBadge
-            v-if="row.original.active === false"
-            color="error"
-            variant="subtle"
-            size="xs"
-          >
-            Disabled
-          </UBadge>
-          <UBadge v-else color="success" variant="subtle" size="xs">
-            Active
-          </UBadge>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-pencil"
-              @click="openEditModal(row.original)"
-            />
-            <UButton
-              v-if="!row.original.isSystem"
-              size="xs"
-              variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
-              @click="openDeleteModal(row.original)"
-            />
-          </div>
-        </template>
-      </UTable>
-
-      <!-- Empty state -->
-      <div v-if="filteredBlockTypes.length === 0 && status !== 'pending'" class="text-center py-12">
-        <UIcon name="i-heroicons-squares-2x2" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-        <p v-if="debouncedSearch" class="text-stone-500 dark:text-stone-400">No block types found.</p>
-        <template v-else>
-          <p class="text-stone-500 dark:text-stone-400">No block types defined.</p>
-          <UButton
-            variant="soft"
-            color="neutral"
-            icon="i-heroicons-plus"
-            class="mt-4"
-            @click="openCreateModal"
-          >
-            Create your first block type
-          </UButton>
-        </template>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-stone-200 dark:border-stone-800">
-        <p class="text-sm text-stone-500 dark:text-stone-400">
-          Showing {{ ((page - 1) * pageSize) + 1 }}–{{ Math.min(page * pageSize, filteredBlockTypes.length) }} of {{ filteredBlockTypes.length }}
-        </p>
-        <UPagination
-          v-model:page="page"
-          :total="filteredBlockTypes.length"
-          :items-per-page="pageSize"
+      <div class="relative w-64">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+        <Input
+          v-model="search"
+          placeholder="Search block types..."
+          class="pl-9"
         />
       </div>
     </div>
 
+    <!-- Table -->
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="w-[40px]"></TableHead>
+            <TableHead>Display Name</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>API Name</TableHead>
+            <TableHead>Fields</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead class="w-[100px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="status === 'pending'">
+            <TableCell colspan="7" class="text-center py-8 text-[hsl(var(--muted-foreground))]">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-for="bt in paginatedBlockTypes" :key="bt.name">
+            <TableCell>
+              <LayoutGrid class="h-5 w-5 text-[hsl(var(--muted-foreground))]" />
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="openEditModal(bt)"
+                  class="font-medium text-[hsl(var(--foreground))] hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  {{ bt.displayName }}
+                </button>
+                <Badge v-if="bt.isSystem" variant="secondary" class="text-xs">
+                  System
+                </Badge>
+              </div>
+            </TableCell>
+            <TableCell>
+              <Badge v-if="bt.category" variant="secondary" class="text-xs">
+                {{ bt.category }}
+              </Badge>
+              <span v-else class="text-[hsl(var(--muted-foreground))]">--</span>
+            </TableCell>
+            <TableCell>
+              <code class="text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
+                {{ bt.name }}
+              </code>
+            </TableCell>
+            <TableCell class="text-sm text-[hsl(var(--muted-foreground))]">
+              {{ getFieldCount(bt.fields) }} fields
+            </TableCell>
+            <TableCell>
+              <Badge
+                v-if="bt.active === false"
+                variant="destructive"
+                class="text-xs"
+              >
+                Disabled
+              </Badge>
+              <Badge v-else variant="default" class="text-xs">
+                Active
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-1">
+                <Button size="sm" variant="ghost" @click="openEditModal(bt)">
+                  <Pencil class="h-4 w-4" />
+                </Button>
+                <Button
+                  v-if="!bt.isSystem"
+                  size="sm"
+                  variant="ghost"
+                  @click="openDeleteModal(bt)"
+                >
+                  <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+
+      <!-- Empty state -->
+      <div v-if="filteredBlockTypes.length === 0 && status !== 'pending'" class="text-center py-12">
+        <LayoutGrid class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+        <p v-if="debouncedSearch" class="text-[hsl(var(--muted-foreground))]">No block types found.</p>
+        <template v-else>
+          <p class="text-[hsl(var(--muted-foreground))]">No block types defined.</p>
+          <Button
+            variant="outline"
+            class="mt-4"
+            @click="openCreateModal"
+          >
+            <Plus class="h-4 w-4 mr-2" />
+            Create your first block type
+          </Button>
+        </template>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-[hsl(var(--border))]">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+          Showing {{ ((page - 1) * pageSize) + 1 }}–{{ Math.min(page * pageSize, filteredBlockTypes.length) }} of {{ filteredBlockTypes.length }}
+        </p>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious :disabled="page <= 1" @click="page = Math.max(1, page - 1)" />
+            </PaginationItem>
+            <PaginationItem>
+              <span class="text-sm text-[hsl(var(--muted-foreground))] px-3">Page {{ page }} of {{ totalPages }}</span>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext :disabled="page >= totalPages" @click="page = Math.min(totalPages, page + 1)" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
+
     <!-- Create Modal -->
-    <UModal v-model:open="showCreateModal">
-      <template #content>
-        <div class="p-6 max-h-[85vh] overflow-y-auto">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create Block Type</h3>
+    <Dialog v-model:open="showCreateModal">
+      <DialogContent class="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Block Type</DialogTitle>
+        </DialogHeader>
 
-          <form @submit.prevent="createBlockType" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput v-model="form.displayName" placeholder="e.g., Hero Section" />
-              </UFormField>
-
-              <UFormField label="API Name" required>
-                <UInput v-model="form.name" placeholder="e.g., hero-section" />
-              </UFormField>
+        <form @submit.prevent="createBlockType" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.displayName" placeholder="e.g., Hero Section" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Category">
-                <USelect
-                  v-model="form.category"
-                  :items="categories"
-                  value-key="value"
-                  label-key="label"
-                />
-              </UFormField>
+            <div class="space-y-2">
+              <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.name" placeholder="e.g., hero-section" />
+            </div>
+          </div>
 
-              <UFormField label="Icon">
-                <UInput v-model="form.icon" placeholder="e.g., i-heroicons-photo" />
-              </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Category</Label>
+              <Select v-model="form.category">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="cat in categories" :key="cat.value" :value="cat.value">{{ cat.label }}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <UFormField label="Description">
-              <UTextarea v-model="form.description" placeholder="What is this block for?" :rows="3" />
-            </UFormField>
-
-            <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
-              <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Fields</h4>
-              <PublisherFieldEditor v-model="form.fields" mode="block" />
+            <div class="space-y-2">
+              <Label>Icon</Label>
+              <Input v-model="form.icon" placeholder="e.g., Image" />
             </div>
+          </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <UButton variant="ghost" color="neutral" @click="showCreateModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Create</UButton>
-            </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          <div class="space-y-2">
+            <Label>Description</Label>
+            <Textarea v-model="form.description" placeholder="What is this block for?" :rows="3" />
+          </div>
+
+          <div class="border-t border-[hsl(var(--border))] pt-4">
+            <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Fields</h4>
+            <PublisherFieldEditor v-model="form.fields" mode="block" />
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" @click="showCreateModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Create
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Edit Modal -->
-    <UModal v-model:open="showEditModal">
-      <template #content>
-        <div class="p-6 max-h-[85vh] overflow-y-auto">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit Block Type</h3>
+    <Dialog v-model:open="showEditModal">
+      <DialogContent class="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Block Type</DialogTitle>
+        </DialogHeader>
 
-          <form @submit.prevent="updateBlockType" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Display Name" required>
-                <UInput v-model="form.displayName" placeholder="e.g., Hero Section" />
-              </UFormField>
-
-              <UFormField label="API Name" required>
-                <UInput v-model="form.name" placeholder="e.g., hero-section" />
-              </UFormField>
+        <form @submit.prevent="updateBlockType" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.displayName" placeholder="e.g., Hero Section" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <UFormField label="Category">
-                <USelect
-                  v-model="form.category"
-                  :items="categories"
-                  value-key="value"
-                  label-key="label"
-                />
-              </UFormField>
+            <div class="space-y-2">
+              <Label>API Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input v-model="form.name" placeholder="e.g., hero-section" />
+            </div>
+          </div>
 
-              <UFormField label="Icon">
-                <UInput v-model="form.icon" placeholder="e.g., i-heroicons-photo" />
-              </UFormField>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Category</Label>
+              <Select v-model="form.category">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="cat in categories" :key="cat.value" :value="cat.value">{{ cat.label }}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <UFormField label="Description">
-              <UTextarea v-model="form.description" placeholder="What is this block for?" :rows="3" />
-            </UFormField>
-
-            <div class="border-t border-stone-200 dark:border-stone-700 pt-4">
-              <h4 class="text-sm font-medium text-stone-900 dark:text-stone-100 mb-3">Fields</h4>
-              <PublisherFieldEditor v-model="form.fields" mode="block" />
+            <div class="space-y-2">
+              <Label>Icon</Label>
+              <Input v-model="form.icon" placeholder="e.g., Image" />
             </div>
+          </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <UButton variant="ghost" color="neutral" @click="showEditModal = false">Cancel</UButton>
-              <UButton type="submit" color="neutral" :loading="isSubmitting">Save</UButton>
-            </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          <div class="space-y-2">
+            <Label>Description</Label>
+            <Textarea v-model="form.description" placeholder="What is this block for?" :rows="3" />
+          </div>
+
+          <div class="border-t border-[hsl(var(--border))] pt-4">
+            <h4 class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">Fields</h4>
+            <PublisherFieldEditor v-model="form.fields" mode="block" />
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" @click="showEditModal = false">Cancel</Button>
+            <Button type="submit" :disabled="isSubmitting">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 mr-2 animate-spin" />
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Delete confirmation -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">Delete Block Type</h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete <span class="font-medium text-stone-700 dark:text-stone-300">{{ selectedBlockType?.displayName }}</span>?
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">Cancel</UButton>
-            <UButton color="error" :loading="isDeleting" @click="deleteBlockType">Delete</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Block Type</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete <span class="font-medium text-[hsl(var(--foreground))]">{{ selectedBlockType?.displayName }}</span>?
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">Cancel</Button>
+          <Button variant="destructive" :disabled="isDeleting" @click="deleteBlockType">
+            <Loader2 v-if="isDeleting" class="h-4 w-4 mr-2 animate-spin" />
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FolderTreeNode as BaseFolderTreeNode } from '#server/utils/publisher/folders'
+import { ChevronDown, ChevronRight, Folder, FolderOpen } from 'lucide-vue-next'
 
 // Extended type with optional mediaCount for UI display
 interface FolderTreeNode extends BaseFolderTreeNode {
@@ -120,9 +121,9 @@ function handleChildDrop(event: DragEvent, folderId: number) {
       class="folder-item group flex items-center gap-1 py-1.5 rounded-lg cursor-pointer transition-colors"
       :class="[
         isActive
-          ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-medium'
-          : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800',
-        isDragOver ? 'ring-2 ring-amber-500 ring-inset' : '',
+          ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))] font-medium'
+          : 'text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]',
+        isDragOver ? 'ring-2 ring-[hsl(var(--primary))] ring-inset' : '',
         isDragging ? 'opacity-50' : '',
       ]"
       :style="{ paddingLeft }"
@@ -138,20 +139,28 @@ function handleChildDrop(event: DragEvent, folderId: number) {
       <!-- Expand/collapse toggle -->
       <button
         v-if="hasChildren"
-        class="p-0.5 rounded hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+        class="p-0.5 rounded hover:bg-[hsl(var(--muted))] transition-colors"
         @click.stop="toggleExpand"
       >
-        <UIcon
-          :name="isExpanded ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
-          class="w-4 h-4 text-stone-400 dark:text-stone-500"
+        <ChevronDown
+          v-if="isExpanded"
+          class="w-4 h-4 text-[hsl(var(--muted-foreground))]"
+        />
+        <ChevronRight
+          v-else
+          class="w-4 h-4 text-[hsl(var(--muted-foreground))]"
         />
       </button>
       <span v-else class="w-5" />
 
       <!-- Folder icon -->
-      <UIcon
-        :name="isExpanded ? 'i-heroicons-folder-open' : 'i-heroicons-folder'"
-        class="w-5 h-5 flex-shrink-0 text-amber-500 dark:text-amber-400"
+      <FolderOpen
+        v-if="isExpanded"
+        class="w-5 h-5 flex-shrink-0 text-[hsl(var(--primary))]"
+      />
+      <Folder
+        v-else
+        class="w-5 h-5 flex-shrink-0 text-[hsl(var(--primary))]"
       />
 
       <!-- Folder name -->
@@ -160,7 +169,7 @@ function handleChildDrop(event: DragEvent, folderId: number) {
       <!-- Media count badge (optional) -->
       <span
         v-if="folder.mediaCount !== undefined && folder.mediaCount > 0"
-        class="text-xs text-stone-400 dark:text-stone-500 mr-2"
+        class="text-xs text-[hsl(var(--muted-foreground))] mr-2"
       >
         {{ folder.mediaCount }}
       </span>

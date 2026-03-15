@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { S3StorageConfig } from '~/server/utils/publisher/storage/types'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
 
 // ─── Model ─────────────────────────────────────────────────────────────────────
 
@@ -26,7 +29,7 @@ const regionOptions = [
   { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
   { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney)' },
   { value: 'ap-south-1', label: 'Asia Pacific (Mumbai)' },
-  { value: 'sa-east-1', label: 'South America (São Paulo)' },
+  { value: 'sa-east-1', label: 'South America (Sao Paulo)' },
   { value: 'ca-central-1', label: 'Canada (Central)' },
 ]
 
@@ -61,92 +64,80 @@ const endpointHint = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <UFormField
-      label="Bucket Name"
-      required
-      hint="S3 bucket name"
-      help="The name of your S3 bucket. Must match exactly as configured in your S3 provider."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="s3BucketName">Bucket Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The name of your S3 bucket. Must match exactly as configured in your S3 provider.</p>
+      <Input
+        id="s3BucketName"
         v-model="config.bucket"
         placeholder="my-bucket"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Region"
-      required
-      hint="AWS region"
-      help="The AWS region where your bucket is located. For custom endpoints, enter the region expected by your provider."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="s3Region">Region <span class="text-[hsl(var(--destructive))]">*</span></Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">The AWS region where your bucket is located. For custom endpoints, enter the region expected by your provider.</p>
+      <Input
+        id="s3Region"
         v-model="config.region"
         placeholder="us-east-1"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Access Key ID"
-      hint="AWS access key (or use AWS_ACCESS_KEY_ID env var)"
-      help="Your AWS or S3-compatible service access key. Can be omitted if set via environment variable or IAM role."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="s3AccessKeyId">Access Key ID</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Your AWS or S3-compatible service access key. Can be omitted if set via environment variable or IAM role.</p>
+      <Input
+        id="s3AccessKeyId"
         v-model="config.accessKeyId"
         type="password"
         placeholder="AWS access key"
         autocomplete="off"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Secret Access Key"
-      hint="AWS secret key (or use AWS_SECRET_ACCESS_KEY env var)"
-      help="Your AWS or S3-compatible service secret key. Can be omitted if set via environment variable or IAM role."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="s3SecretAccessKey">Secret Access Key</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Your AWS or S3-compatible service secret key. Can be omitted if set via environment variable or IAM role.</p>
+      <Input
+        id="s3SecretAccessKey"
         v-model="config.secretAccessKey"
         type="password"
         placeholder="AWS secret key"
         autocomplete="off"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Custom Endpoint"
-      :hint="endpointHint"
-      help="For S3-compatible services like MinIO or DigitalOcean Spaces, enter the service endpoint URL. Leave empty for standard AWS S3."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="s3Endpoint">Custom Endpoint</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">{{ endpointHint }}</p>
+      <Input
+        id="s3Endpoint"
         v-model="config.endpoint"
         placeholder="https://s3.example.com"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Custom Domain"
-      hint="Optional CDN domain for public URLs"
-      help="If you've configured a custom domain or CDN for your bucket, enter it here to use it for public URLs."
-    >
-      <UInput
+    <div class="space-y-2">
+      <Label for="s3CustomDomain">Custom Domain</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">If you've configured a custom domain or CDN for your bucket, enter it here to use it for public URLs.</p>
+      <Input
+        id="s3CustomDomain"
         v-model="config.customDomain"
         placeholder="https://cdn.example.com"
       />
-    </UFormField>
+    </div>
 
-    <UFormField
-      label="Force Path Style"
-      hint="Required for MinIO and some S3-compatible services"
-      help="When enabled, uses path-style URLs (endpoint/bucket/key) instead of virtual-hosted style (bucket.endpoint/key). Required for MinIO."
-    >
-      <USwitch v-model:checked="config.forcePathStyle" />
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Force Path Style</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">When enabled, uses path-style URLs (endpoint/bucket/key) instead of virtual-hosted style (bucket.endpoint/key). Required for MinIO.</p>
+      <Switch v-model:checked="config.forcePathStyle" />
+    </div>
 
-    <UFormField
-      label="Public Bucket"
-      hint="Enable for public read access"
-      help="Enable if your bucket has public access configured. This allows generating public URLs without signing."
-    >
-      <USwitch v-model:checked="config.public" />
-    </UFormField>
+    <div class="space-y-2">
+      <Label>Public Bucket</Label>
+      <p class="text-xs text-[hsl(var(--muted-foreground))]">Enable if your bucket has public access configured. This allows generating public URLs without signing.</p>
+      <Switch v-model:checked="config.public" />
+    </div>
   </div>
 </template>

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { FolderTreeNode } from '#server/utils/publisher/folders'
+import { Button } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Image, Folder } from 'lucide-vue-next'
 
 // ─── Props & Emits ───────────────────────────────────────────────────────────
 
@@ -59,49 +62,47 @@ watch(() => props.open, (newVal) => {
 </script>
 
 <template>
-  <UModal v-model:open="isOpen">
-    <template #content>
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-          Move to Folder
-        </h3>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
-          Select a destination folder for "{{ fileName }}"
-        </p>
+  <Dialog v-model:open="isOpen">
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Move to Folder</DialogTitle>
+      </DialogHeader>
+      <p class="text-sm text-[hsl(var(--muted-foreground))]">
+        Select a destination folder for "{{ fileName }}"
+      </p>
 
-        <div class="border border-stone-200 dark:border-stone-700 rounded-lg max-h-64 overflow-y-auto mb-4">
-          <!-- Root option -->
-          <button
-            class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-            :class="selectedFolderId === null ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400' : 'text-stone-700 dark:text-stone-300'"
-            @click="selectedFolderId = null"
-          >
-            <UIcon name="i-heroicons-photo" class="w-5 h-5" />
-            <span>Media Library (root)</span>
-          </button>
+      <div class="border border-[hsl(var(--border))] rounded-lg max-h-64 overflow-y-auto">
+        <!-- Root option -->
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[hsl(var(--accent))] transition-colors"
+          :class="selectedFolderId === null ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))]'"
+          @click="selectedFolderId = null"
+        >
+          <Image class="w-5 h-5" />
+          <span>Media Library (root)</span>
+        </button>
 
-          <!-- Folder options -->
-          <button
-            v-for="folder in flatFolders"
-            :key="folder.id"
-            class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-            :class="selectedFolderId === folder.id ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400' : 'text-stone-700 dark:text-stone-300'"
-            @click="selectedFolderId = folder.id"
-          >
-            <UIcon name="i-heroicons-folder" class="w-5 h-5" />
-            <span>{{ folder.path }}</span>
-          </button>
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <UButton variant="ghost" color="neutral" @click="closeDialog">
-            Cancel
-          </UButton>
-          <UButton color="neutral" @click="handleMove">
-            Move
-          </UButton>
-        </div>
+        <!-- Folder options -->
+        <button
+          v-for="folder in flatFolders"
+          :key="folder.id"
+          class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[hsl(var(--accent))] transition-colors"
+          :class="selectedFolderId === folder.id ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))]'"
+          @click="selectedFolderId = folder.id"
+        >
+          <Folder class="w-5 h-5" />
+          <span>{{ folder.path }}</span>
+        </button>
       </div>
-    </template>
-  </UModal>
+
+      <DialogFooter>
+        <Button variant="ghost" @click="closeDialog">
+          Cancel
+        </Button>
+        <Button @click="handleMove">
+          Move
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { PageBlock, BlockTypeConfig, PageTypeConfig, AreaConfig } from '~~/lib/publisher/types'
+import { Button } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Box, Plus, FileText } from 'lucide-vue-next'
 
 const props = withDefaults(defineProps<{
   blocks: Record<string, PageBlock[]>
@@ -38,12 +41,12 @@ function getBlockTypeConfig(blockTypeName: string): BlockTypeConfig | null {
 function getAllowedBlocksHint(areaName: string): string {
   const areaConfig = getAreaConfig(areaName)
   if (!areaConfig || !areaConfig.allowedBlocks.length) return ''
-  
+
   const displayNames = areaConfig.allowedBlocks.map(blockTypeName => {
     const config = getBlockTypeConfig(blockTypeName)
     return config?.displayName || blockTypeName
   })
-  
+
   return displayNames.join(', ')
 }
 
@@ -51,7 +54,7 @@ function getAllowedBlocksHint(areaName: string): string {
 function isAddButtonDisabled(areaName: string): boolean {
   const areaConfig = getAreaConfig(areaName)
   if (!areaConfig?.maxBlocks) return false
-  
+
   const currentCount = props.blocks[areaName]?.length || 0
   return currentCount >= areaConfig.maxBlocks
 }
@@ -60,7 +63,7 @@ function isAddButtonDisabled(areaName: string): boolean {
 function getMaxBlocksHint(areaName: string): string {
   const areaConfig = getAreaConfig(areaName)
   if (!areaConfig?.maxBlocks) return ''
-  
+
   const currentCount = props.blocks[areaName]?.length || 0
   return `max: ${areaConfig.maxBlocks}`
 }
@@ -82,7 +85,7 @@ function handleAddBlock(areaName: string) {
 </script>
 
 <template>
-  <div class="flex-1 overflow-auto bg-stone-100 dark:bg-stone-950 p-6">
+  <div class="flex-1 overflow-auto bg-[hsl(var(--background))] p-6">
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Area containers -->
       <div
@@ -90,51 +93,48 @@ function handleAddBlock(areaName: string) {
         :key="areaName"
         class="rounded-xl overflow-hidden"
         :class="mode === 'edit'
-          ? 'border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900'
-          : 'border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50'"
+          ? 'border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--card))]'
+          : 'border border-[hsl(var(--border))] bg-[hsl(var(--background))]'"
       >
         <!-- Area header -->
         <div
           class="px-4 py-3 border-b"
           :class="mode === 'edit'
-            ? 'bg-stone-50 dark:bg-stone-800/50 border-stone-200 dark:border-stone-700'
-            : 'bg-stone-100 dark:bg-stone-800 border-stone-200 dark:border-stone-800'"
+            ? 'bg-[hsl(var(--muted))] border-[hsl(var(--border))]'
+            : 'bg-[hsl(var(--muted))] border-[hsl(var(--border))]'"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <h4 class="text-sm font-semibold text-stone-800 dark:text-stone-200 uppercase tracking-wide">
+              <h4 class="text-sm font-semibold text-[hsl(var(--foreground))] uppercase tracking-wide">
                 {{ getAreaConfig(areaName)?.displayName || areaName }}
               </h4>
 
               <!-- Max blocks badge (edit mode only) -->
-              <UBadge
+              <Badge
                 v-if="mode === 'edit' && getAreaConfig(areaName)?.maxBlocks"
-                size="xs"
-                variant="subtle"
-                color="neutral"
+                variant="secondary"
               >
                 {{ getMaxBlocksHint(areaName) }}
-              </UBadge>
+              </Badge>
             </div>
 
             <!-- Add block button (edit mode only) -->
-            <UButton
+            <Button
               v-if="mode === 'edit'"
-              size="xs"
+              size="sm"
               variant="ghost"
-              color="primary"
-              icon="i-heroicons-plus"
               :disabled="isAddButtonDisabled(areaName)"
               @click="handleAddBlock(areaName)"
             >
+              <Plus class="h-4 w-4 mr-2" />
               Add Block
-            </UButton>
+            </Button>
           </div>
 
           <!-- Allowed blocks hint (edit mode only) -->
           <p
             v-if="mode === 'edit' && getAllowedBlocksHint(areaName)"
-            class="text-xs text-stone-500 dark:text-stone-400 mt-1"
+            class="text-xs text-[hsl(var(--muted-foreground))] mt-1"
           >
             Allowed: {{ getAllowedBlocksHint(areaName) }}
           </p>
@@ -185,24 +185,23 @@ function handleAddBlock(areaName: string) {
               v-else
               class="text-center py-8"
             >
-              <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 mb-3">
-                <UIcon name="i-heroicons-cube" class="text-xl text-stone-400 dark:text-stone-500" />
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[hsl(var(--muted))] mb-3">
+                <Box class="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
               </div>
-              <p class="text-sm text-stone-500 dark:text-stone-400 mb-1">
+              <p class="text-sm text-[hsl(var(--muted-foreground))] mb-1">
                 No blocks yet
               </p>
-              <p class="text-xs text-stone-400 dark:text-stone-500 mb-4">
+              <p class="text-xs text-[hsl(var(--muted-foreground))] mb-4">
                 Click the button below to add a block
               </p>
-              <UButton
+              <Button
                 size="sm"
                 variant="outline"
-                color="primary"
-                icon="i-heroicons-plus"
                 @click="handleAddBlock(areaName)"
               >
+                <Plus class="h-4 w-4 mr-2" />
                 Add Block
-              </UButton>
+              </Button>
             </div>
           </template>
 
@@ -219,9 +218,9 @@ function handleAddBlock(areaName: string) {
             <!-- Empty state (preview mode) -->
             <div
               v-else
-              class="text-center py-8 text-stone-400 dark:text-stone-500"
+              class="text-center py-8 text-[hsl(var(--muted-foreground))]"
             >
-              <UIcon name="i-heroicons-document-text" class="text-2xl mb-2" />
+              <FileText class="w-6 h-6 mx-auto mb-2" />
               <p class="text-sm">No content in this area</p>
             </div>
           </template>

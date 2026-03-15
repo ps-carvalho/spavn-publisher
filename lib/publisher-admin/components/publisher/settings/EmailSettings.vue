@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import type { EmailSettings, EmailProviderType } from '~/server/utils/publisher/settings/types'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Badge } from '@spavn/ui'
+import { Switch } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { AlertTriangle, Check, CheckCircle, XCircle, RefreshCw, Send, Loader2 } from 'lucide-vue-next'
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 
@@ -14,7 +22,7 @@ const validationErrors = ref<Record<string, string[]>>({})
 
 // ─── Toast ─────────────────────────────────────────────────────────────────────
 
-const toast = useToast()
+const { toast } = useToast()
 
 // ─── Provider Options ───────────────────────────────────────────────────────────
 
@@ -80,10 +88,10 @@ async function loadSettings() {
       initializeFormState()
     }
   } catch (error) {
-    toast.add({
+    toast({
       title: 'Failed to load email configuration',
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     loading.value = false
@@ -140,12 +148,12 @@ async function testConnection() {
       duration: response.duration,
     }
 
-    toast.add({
+    toast({
       title: response.success ? 'Test email sent' : 'Test failed',
       description: response.success
         ? `Check your inbox at ${response.recipient}`
         : response.error || response.message,
-      color: response.success ? 'success' : 'error',
+      variant: response.success ? undefined : 'destructive',
     })
   } catch (error) {
     testResult.value = {
@@ -153,10 +161,10 @@ async function testConnection() {
       message: error instanceof Error ? error.message : 'Connection test failed',
     }
 
-    toast.add({
+    toast({
       title: 'Connection test failed',
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     testing.value = false
@@ -179,10 +187,9 @@ async function saveSettings() {
 
     configured.value = true
 
-    toast.add({
+    toast({
       title: 'Configuration saved',
       description: `Email settings updated for ${response.provider.toUpperCase()}`,
-      color: 'success',
     })
 
     // Reload to get masked values
@@ -192,10 +199,10 @@ async function saveSettings() {
       validationErrors.value = err.data.error.details
     }
 
-    toast.add({
+    toast({
       title: 'Failed to save configuration',
       description: err?.data?.error?.message || err.message || 'An unexpected error occurred',
-      color: 'error',
+      variant: 'destructive',
     })
   } finally {
     saving.value = false
@@ -234,106 +241,150 @@ watch(selectedProvider, () => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
+        <h3 class="text-lg font-semibold text-[hsl(var(--foreground))] tracking-tight">
           Email Configuration
         </h3>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
           Configure how emails are sent from the system
         </p>
       </div>
-      <UBadge v-if="configured" color="success" variant="subtle">
+      <Badge v-if="configured" variant="default">
         Configured
-      </UBadge>
+      </Badge>
     </div>
 
     <!-- Loading state -->
     <div v-if="loading" class="py-8 text-center">
-      <UIcon name="i-heroicons-arrow-path" class="text-2xl animate-spin text-stone-400" />
-      <p class="mt-2 text-sm text-stone-500 dark:text-stone-400">Loading configuration...</p>
+      <RefreshCw class="mx-auto h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))]" />
+      <p class="mt-2 text-sm text-[hsl(var(--muted-foreground))]">Loading configuration...</p>
     </div>
 
     <!-- Config form -->
     <div v-else class="space-y-6">
       <!-- Provider Selection -->
-      <UFormField label="Email Provider" required>
-        <USelect
+      <div class="space-y-2">
+        <Label>Email Provider <span class="text-[hsl(var(--destructive))]">*</span></Label>
+        <Select
           :model-value="selectedProvider"
-          :items="providerOptions"
           @update:model-value="handleProviderChange"
-        />
-      </UFormField>
+        >
+          <SelectTrigger><SelectValue placeholder="Select provider" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="opt in providerOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <!-- Dynamic Provider Form -->
-      <div class="space-y-4 p-4 bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-800">
+      <div class="space-y-4 p-4 bg-[hsl(var(--background))] rounded-lg border border-[hsl(var(--border))]">
         <!-- Common Fields -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UFormField label="From Name" required :error="validationErrors.fromName?.[0]">
-            <UInput v-model="formState.fromName" placeholder="Publisher CMS" />
-          </UFormField>
-          <UFormField label="From Address" required :error="validationErrors.fromAddress?.[0]">
-            <UInput v-model="formState.fromAddress" type="email" placeholder="noreply@example.com" />
-          </UFormField>
+          <div class="space-y-2">
+            <Label for="fromName">From Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="fromName" v-model="formState.fromName" placeholder="Publisher CMS" />
+            <p v-if="validationErrors.fromName?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.fromName[0] }}</p>
+          </div>
+          <div class="space-y-2">
+            <Label for="fromAddress">From Address <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="fromAddress" v-model="formState.fromAddress" type="email" placeholder="noreply@example.com" />
+            <p v-if="validationErrors.fromAddress?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.fromAddress[0] }}</p>
+          </div>
         </div>
 
         <!-- SMTP Fields -->
         <template v-if="selectedProvider === 'smtp'">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="SMTP Host" required :error="validationErrors.host?.[0]">
-              <UInput v-model="formState.host" placeholder="smtp.example.com" />
-            </UFormField>
-            <UFormField label="Port" required :error="validationErrors.port?.[0]">
-              <UInput v-model.number="formState.port" type="number" placeholder="587" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label for="smtpHost">SMTP Host <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="smtpHost" v-model="formState.host" placeholder="smtp.example.com" />
+              <p v-if="validationErrors.host?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.host[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label for="smtpPort">Port <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="smtpPort" v-model.number="formState.port" type="number" placeholder="587" />
+              <p v-if="validationErrors.port?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.port[0] }}</p>
+            </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UFormField label="Username" required :error="validationErrors.username?.[0]">
-              <UInput v-model="formState.username" placeholder="user@example.com" />
-            </UFormField>
-            <UFormField label="Password" required :error="validationErrors.password?.[0]">
-              <UInput v-model="formState.password" type="password" placeholder="••••••••" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label for="smtpUsername">Username <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="smtpUsername" v-model="formState.username" placeholder="user@example.com" />
+              <p v-if="validationErrors.username?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.username[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label for="smtpPassword">Password <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="smtpPassword" v-model="formState.password" type="password" placeholder="••••••••" />
+              <p v-if="validationErrors.password?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.password[0] }}</p>
+            </div>
           </div>
-          <UFormField label="Use TLS/SSL">
-            <USwitch v-model:checked="formState.secure" />
-            <span class="ml-2 text-sm text-stone-500 dark:text-stone-400">Enable for port 465</span>
-          </UFormField>
+          <div class="space-y-2">
+            <Label>Use TLS/SSL</Label>
+            <div class="flex items-center gap-2">
+              <Switch v-model:checked="formState.secure" />
+              <span class="text-sm text-[hsl(var(--muted-foreground))]">Enable for port 465</span>
+            </div>
+          </div>
         </template>
 
         <!-- SendGrid Fields -->
         <template v-else-if="selectedProvider === 'sendgrid'">
-          <UFormField label="API Key" required :error="validationErrors.apiKey?.[0]">
-            <UInput v-model="formState.apiKey" type="password" placeholder="SG.xxxxxxxxxxxxxxxx" />
-          </UFormField>
+          <div class="space-y-2">
+            <Label for="sgApiKey">API Key <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input id="sgApiKey" v-model="formState.apiKey" type="password" placeholder="SG.xxxxxxxxxxxxxxxx" />
+            <p v-if="validationErrors.apiKey?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.apiKey[0] }}</p>
+          </div>
         </template>
 
         <!-- AWS SES Fields -->
         <template v-else-if="selectedProvider === 'ses'">
           <div class="space-y-4">
-            <UFormField label="Access Key ID" required :error="validationErrors.accessKeyId?.[0]">
-              <UInput v-model="formState.accessKeyId" placeholder="AKIAIOSFODNN7EXAMPLE" />
-            </UFormField>
-            <UFormField label="Secret Access Key" required :error="validationErrors.secretAccessKey?.[0]">
-              <UInput v-model="formState.secretAccessKey" type="password" placeholder="••••••••" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label for="sesAccessKeyId">Access Key ID <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="sesAccessKeyId" v-model="formState.accessKeyId" placeholder="AKIAIOSFODNN7EXAMPLE" />
+              <p v-if="validationErrors.accessKeyId?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.accessKeyId[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label for="sesSecretAccessKey">Secret Access Key <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="sesSecretAccessKey" v-model="formState.secretAccessKey" type="password" placeholder="••••••••" />
+              <p v-if="validationErrors.secretAccessKey?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.secretAccessKey[0] }}</p>
+            </div>
           </div>
-          <UFormField label="AWS Region" required :error="validationErrors.region?.[0]">
-            <USelect v-model="formState.region" :items="awsRegionOptions" />
-          </UFormField>
+          <div class="space-y-2">
+            <Label>AWS Region <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Select v-model="formState.region">
+              <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in awsRegionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p v-if="validationErrors.region?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.region[0] }}</p>
+          </div>
         </template>
 
         <!-- Mailgun Fields -->
         <template v-else-if="selectedProvider === 'mailgun'">
           <div class="space-y-4">
-            <UFormField label="API Key" required :error="validationErrors.apiKey?.[0]">
-              <UInput v-model="formState.apiKey" type="password" placeholder="key-xxxxxxxxxxxxxxxx" />
-            </UFormField>
-            <UFormField label="Domain" required :error="validationErrors.domain?.[0]">
-              <UInput v-model="formState.domain" placeholder="mg.example.com" />
-            </UFormField>
+            <div class="space-y-2">
+              <Label for="mgApiKey">API Key <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="mgApiKey" v-model="formState.apiKey" type="password" placeholder="key-xxxxxxxxxxxxxxxx" />
+              <p v-if="validationErrors.apiKey?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.apiKey[0] }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label for="mgDomain">Domain <span class="text-[hsl(var(--destructive))]">*</span></Label>
+              <Input id="mgDomain" v-model="formState.domain" placeholder="mg.example.com" />
+              <p v-if="validationErrors.domain?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.domain[0] }}</p>
+            </div>
           </div>
-          <UFormField label="Region" :error="validationErrors.region?.[0]">
-            <USelect v-model="formState.region" :items="mailgunRegionOptions" />
-          </UFormField>
+          <div class="space-y-2">
+            <Label>Region</Label>
+            <Select v-model="formState.region">
+              <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in mailgunRegionOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p v-if="validationErrors.region?.[0]" class="text-sm text-[hsl(var(--destructive))]">{{ validationErrors.region[0] }}</p>
+          </div>
         </template>
       </div>
 
@@ -344,16 +395,14 @@ watch(selectedProvider, () => {
           'p-4 rounded-lg border',
           testResult.success
             ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-            : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+            : 'bg-[hsl(var(--destructive)/0.1)] border-[hsl(var(--destructive)/0.3)]'
         ]"
       >
         <div class="flex items-center gap-2">
-          <UIcon
-            :name="testResult.success ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
-            :class="testResult.success ? 'text-green-600' : 'text-red-600'"
-          />
+          <CheckCircle v-if="testResult.success" class="h-5 w-5 text-green-600" />
+          <XCircle v-else class="h-5 w-5 text-[hsl(var(--destructive))]" />
           <span
-            :class="testResult.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'"
+            :class="testResult.success ? 'text-green-700 dark:text-green-300' : 'text-[hsl(var(--destructive))]'"
           >
             {{ testResult.message }}
             <span v-if="testResult.duration" class="text-sm opacity-75">
@@ -366,42 +415,36 @@ watch(selectedProvider, () => {
       <!-- Unsaved Changes Warning -->
       <div
         v-if="hasUnsavedChanges && configured"
-        class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800"
+        class="p-3 rounded-lg bg-[hsl(var(--accent))] border border-[hsl(var(--border))]"
       >
         <div class="flex items-center gap-2">
-          <UIcon name="i-heroicons-exclamation-triangle" class="text-amber-600" />
-          <span class="text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle class="h-4 w-4 text-[hsl(var(--primary))]" />
+          <span class="text-sm text-[hsl(var(--foreground))]">
             You may have unsaved changes
           </span>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
-        <UButton
+      <div class="flex gap-3 pt-4 border-t border-[hsl(var(--border))]">
+        <Button
           variant="outline"
-          color="neutral"
-          :loading="testing"
           :disabled="saving || !configured"
           @click="testConnection"
         >
-          <template v-if="!testing">
-            <UIcon name="i-heroicons-paper-airplane" class="mr-1" />
-          </template>
+          <Loader2 v-if="testing" class="h-4 w-4 mr-2 animate-spin" />
+          <Send v-else class="h-4 w-4 mr-2" />
           Send Test Email
-        </UButton>
+        </Button>
 
-        <UButton
-          color="neutral"
-          :loading="saving"
+        <Button
           :disabled="testing"
           @click="saveSettings"
         >
-          <template v-if="!saving">
-            <UIcon name="i-heroicons-check" class="mr-1" />
-          </template>
+          <Loader2 v-if="saving" class="h-4 w-4 mr-2 animate-spin" />
+          <Check v-else class="h-4 w-4 mr-2" />
           Save Configuration
-        </UButton>
+        </Button>
       </div>
     </div>
   </div>

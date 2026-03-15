@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { z } from 'zod'
+import { Plus, Settings, Trash2, Menu, AlertTriangle } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Textarea } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { Alert, AlertTitle, AlertDescription } from '@spavn/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
 
 definePageMeta({
   layout: 'admin',
@@ -16,7 +26,7 @@ interface MenuListItem {
   itemCount: number
 }
 
-const toast = useToast()
+const { toast } = useToast()
 const showCreateModal = ref(false)
 const showDeleteModal = ref(false)
 const selectedMenu = ref<MenuListItem | null>(null)
@@ -57,15 +67,6 @@ const locationOptions = [
 // Fetch menus
 const { data, refresh, status } = await useFetch<{ data: MenuListItem[] }>('/api/publisher/menus')
 const menus = computed(() => data.value?.data || [])
-
-// Table columns
-const columns = [
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'slug', header: 'Slug' },
-  { accessorKey: 'itemCount', header: 'Items' },
-  { accessorKey: 'location', header: 'Location' },
-  { id: 'actions', header: '' },
-]
 
 // Reset form
 function resetForm() {
@@ -120,11 +121,11 @@ async function createMenu() {
     showCreateModal.value = false
     resetForm()
     await refresh()
-    toast.add({ title: 'Menu created', color: 'success' })
+    toast({ title: 'Menu created' })
   }
   catch (e: unknown) {
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({ title: err?.data?.data?.error?.message || 'Failed to create menu', color: 'error' })
+    toast({ title: err?.data?.data?.error?.message || 'Failed to create menu', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -155,11 +156,11 @@ async function deleteMenu() {
     showDeleteModal.value = false
     selectedMenu.value = null
     await refresh()
-    toast.add({ title: 'Menu deleted', color: 'success' })
+    toast({ title: 'Menu deleted' })
   }
   catch (e: unknown) {
     const err = e as { data?: { data?: { error?: { message?: string } } } }
-    toast.add({ title: err?.data?.data?.error?.message || 'Failed to delete menu', color: 'error' })
+    toast({ title: err?.data?.data?.error?.message || 'Failed to delete menu', variant: 'destructive' })
   }
   finally {
     isSubmitting.value = false
@@ -168,15 +169,15 @@ async function deleteMenu() {
 
 // Get location badge color
 function getLocationClass(location: string | null): string {
-  if (!location) return 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400'
-  
+  if (!location) return 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
+
   const colors: Record<string, string> = {
-    header: 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300',
-    footer: 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300',
-    sidebar: 'bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300',
-    main: 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300',
+    header: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
+    footer: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
+    sidebar: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
+    main: 'bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]',
   }
-  return colors[location] || 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400'
+  return colors[location] || 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
 }
 </script>
 
@@ -184,213 +185,206 @@ function getLocationClass(location: string | null): string {
   <div>
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Menus</h2>
-      <UButton icon="i-heroicons-plus" color="neutral" @click="showCreateModal = true">
+      <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">Menus</h2>
+      <Button variant="outline" @click="showCreateModal = true">
+        <Plus class="h-4 w-4 mr-2" />
         New Menu
-      </UButton>
+      </Button>
     </div>
 
-    <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
+    <p class="text-sm text-[hsl(var(--muted-foreground))] mb-4">
       Manage navigation menus for your site
     </p>
 
     <!-- Menus table -->
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable :data="menus" :columns="columns" :loading="status === 'pending'">
-        <template #name-cell="{ row }">
-          <NuxtLink
-            :to="`/admin/menus/${row.original.id}`"
-            class="font-medium text-stone-900 dark:text-stone-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
-            {{ row.original.name }}
-          </NuxtLink>
-          <p v-if="row.original.description" class="text-xs text-stone-500 dark:text-stone-400 mt-0.5 truncate max-w-xs">
-            {{ row.original.description }}
-          </p>
-        </template>
-
-        <template #slug-cell="{ row }">
-          <code class="text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded font-mono">
-            {{ row.original.slug }}
-          </code>
-        </template>
-
-        <template #itemCount-cell="{ row }">
-          <span class="text-sm text-stone-600 dark:text-stone-400">
-            {{ row.original.itemCount }} {{ row.original.itemCount === 1 ? 'item' : 'items' }}
-          </span>
-        </template>
-
-        <template #location-cell="{ row }">
-          <span
-            v-if="row.original.location"
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize"
-            :class="getLocationClass(row.original.location)"
-          >
-            {{ row.original.location }}
-          </span>
-          <span v-else class="text-stone-400 dark:text-stone-500 text-sm">—</span>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UTooltip text="Edit menu items">
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                icon="i-heroicons-cog-6-tooth"
-                :to="`/admin/menus/${row.original.id}`"
-              />
-            </UTooltip>
-            <UTooltip text="Delete menu">
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="error"
-                icon="i-heroicons-trash"
-                @click="openDeleteModal(row.original)"
-              />
-            </UTooltip>
-          </div>
-        </template>
-      </UTable>
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Slug</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead class="w-[100px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="status === 'pending'">
+            <TableCell colspan="5" class="text-center py-8 text-[hsl(var(--muted-foreground))]">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-for="row in menus" :key="row.id">
+            <TableCell>
+              <NuxtLink
+                :to="`/admin/menus/${row.id}`"
+                class="font-medium text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] transition-colors"
+              >
+                {{ row.name }}
+              </NuxtLink>
+              <p v-if="row.description" class="text-xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate max-w-xs">
+                {{ row.description }}
+              </p>
+            </TableCell>
+            <TableCell>
+              <code class="text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-1.5 py-0.5 rounded font-mono">
+                {{ row.slug }}
+              </code>
+            </TableCell>
+            <TableCell class="text-sm text-[hsl(var(--muted-foreground))]">
+              {{ row.itemCount }} {{ row.itemCount === 1 ? 'item' : 'items' }}
+            </TableCell>
+            <TableCell>
+              <span
+                v-if="row.location"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize"
+                :class="getLocationClass(row.location)"
+              >
+                {{ row.location }}
+              </span>
+              <span v-else class="text-[hsl(var(--muted-foreground))] text-sm">--</span>
+            </TableCell>
+            <TableCell>
+              <div class="flex items-center gap-1">
+                <Button size="sm" variant="ghost" as-child title="Edit menu items">
+                  <NuxtLink :to="`/admin/menus/${row.id}`">
+                    <Settings class="h-4 w-4" />
+                  </NuxtLink>
+                </Button>
+                <Button size="sm" variant="ghost" title="Delete menu" @click="openDeleteModal(row)">
+                  <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
 
       <!-- Empty state -->
       <div v-if="menus.length === 0 && status !== 'pending'" class="text-center py-12">
-        <UIcon name="i-heroicons-bars-3" class="text-4xl text-stone-400 dark:text-stone-500 mb-3" />
-        <p class="text-stone-500 dark:text-stone-400">No menus created yet.</p>
-        <p class="text-sm text-stone-400 dark:text-stone-500 mt-1">Create a menu to manage navigation links.</p>
-        <UButton
-          variant="soft"
-          color="neutral"
-          icon="i-heroicons-plus"
+        <Menu class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">No menus created yet.</p>
+        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">Create a menu to manage navigation links.</p>
+        <Button
+          variant="outline"
           class="mt-4"
           @click="showCreateModal = true"
         >
+          <Plus class="h-4 w-4 mr-2" />
           Create your first menu
-        </UButton>
+        </Button>
       </div>
     </div>
 
     <!-- Create Modal -->
-    <UModal v-model:open="showCreateModal" @close="closeCreateModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
-            Create Menu
-          </h3>
-          <form @submit.prevent="createMenu" class="space-y-4">
-            <UFormField label="Name" required :error="formErrors.name">
-              <UInput
-                v-model="createForm.name"
-                placeholder="e.g., Main Navigation"
-                class="w-full"
-                @blur="generateSlug"
-              />
-            </UFormField>
+    <Dialog v-model:open="showCreateModal" @close="closeCreateModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Menu</DialogTitle>
+        </DialogHeader>
+        <form @submit.prevent="createMenu" class="space-y-4">
+          <div class="space-y-2">
+            <Label>Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              v-model="createForm.name"
+              placeholder="e.g., Main Navigation"
+              class="w-full"
+              @blur="generateSlug"
+            />
+            <p v-if="formErrors.name" class="text-xs text-[hsl(var(--destructive))]">{{ formErrors.name }}</p>
+          </div>
 
-            <UFormField label="Display Name" required :error="formErrors.displayName">
-              <UInput
-                v-model="createForm.displayName"
-                placeholder="e.g., Main Navigation"
-                class="w-full"
-              />
-            </UFormField>
+          <div class="space-y-2">
+            <Label>Display Name <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              v-model="createForm.displayName"
+              placeholder="e.g., Main Navigation"
+              class="w-full"
+            />
+            <p v-if="formErrors.displayName" class="text-xs text-[hsl(var(--destructive))]">{{ formErrors.displayName }}</p>
+          </div>
 
-            <UFormField label="Slug" required :error="formErrors.slug">
-              <UInput
-                v-model="createForm.slug"
-                placeholder="e.g., main-navigation"
-                class="w-full"
-              />
-              <template #hint>
-                <span class="text-xs text-stone-400">Used in API calls and templates</span>
-              </template>
-            </UFormField>
+          <div class="space-y-2">
+            <Label>Slug <span class="text-[hsl(var(--destructive))]">*</span></Label>
+            <Input
+              v-model="createForm.slug"
+              placeholder="e.g., main-navigation"
+              class="w-full"
+            />
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Used in API calls and templates</p>
+            <p v-if="formErrors.slug" class="text-xs text-[hsl(var(--destructive))]">{{ formErrors.slug }}</p>
+          </div>
 
-            <UFormField label="Description" :error="formErrors.description">
-              <UTextarea
-                v-model="createForm.description"
-                placeholder="Brief description of this menu's purpose"
-                :rows="3"
-                class="w-full"
-              />
-            </UFormField>
+          <div class="space-y-2">
+            <Label>Description</Label>
+            <Textarea
+              v-model="createForm.description"
+              placeholder="Brief description of this menu's purpose"
+              :rows="3"
+              class="w-full"
+            />
+            <p v-if="formErrors.description" class="text-xs text-[hsl(var(--destructive))]">{{ formErrors.description }}</p>
+          </div>
 
-            <UFormField label="Location" :error="formErrors.location">
-              <USelectMenu
-                v-model="createForm.location"
-                :items="locationOptions"
-                value-key="value"
-                placeholder="Select location"
-                class="w-full"
-              />
-              <template #hint>
-                <span class="text-xs text-stone-400">Where this menu appears on the site</span>
-              </template>
-            </UFormField>
+          <div class="space-y-2">
+            <Label>Location</Label>
+            <Select v-model="createForm.location">
+              <SelectTrigger class="w-full">
+                <SelectValue placeholder="Select location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in locationOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p class="text-xs text-[hsl(var(--muted-foreground))]">Where this menu appears on the site</p>
+            <p v-if="formErrors.location" class="text-xs text-[hsl(var(--destructive))]">{{ formErrors.location }}</p>
+          </div>
 
-            <div class="flex justify-end gap-2 pt-2">
-              <UButton variant="ghost" color="neutral" @click="closeCreateModal">
-                Cancel
-              </UButton>
-              <UButton
-                type="submit"
-                color="neutral"
-                :loading="isSubmitting"
-                :disabled="!createForm.name || !createForm.displayName || !createForm.slug"
-              >
-                Create Menu
-              </UButton>
-            </div>
-          </form>
-        </div>
-      </template>
-    </UModal>
+          <DialogFooter>
+            <Button variant="ghost" @click="closeCreateModal">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              :disabled="isSubmitting || !createForm.name || !createForm.displayName || !createForm.slug"
+            >
+              Create Menu
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <div class="flex items-start gap-3 mb-4">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 shrink-0">
-              <UIcon name="i-heroicons-exclamation-triangle" class="text-xl text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
-                Delete Menu
-              </h3>
-              <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
-                Are you sure you want to delete <span class="font-medium text-stone-700 dark:text-stone-300">{{ selectedMenu?.name }}</span>?
-              </p>
-            </div>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Menu</DialogTitle>
+        </DialogHeader>
+        <div class="flex items-start gap-3 mb-4">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-[hsl(var(--destructive))]/10 shrink-0">
+            <AlertTriangle class="h-5 w-5 text-[hsl(var(--destructive))]" />
           </div>
-
-          <UAlert
-            color="warning"
-            variant="subtle"
-            icon="i-heroicons-exclamation-triangle"
-            class="mb-4"
-          >
-            <template #title>
-              This action cannot be undone
-            </template>
-            <template #description>
-              All {{ selectedMenu?.itemCount || 0 }} menu items will be permanently deleted along with this menu.
-            </template>
-          </UAlert>
-
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">
-              Cancel
-            </UButton>
-            <UButton color="error" :loading="isSubmitting" @click="deleteMenu">
-              Delete Menu
-            </UButton>
-          </div>
+          <p class="text-sm text-[hsl(var(--muted-foreground))]">
+            Are you sure you want to delete <span class="font-medium text-[hsl(var(--foreground))]">{{ selectedMenu?.name }}</span>?
+          </p>
         </div>
-      </template>
-    </UModal>
+
+        <Alert variant="destructive" class="mb-4">
+          <AlertTriangle class="h-4 w-4" />
+          <AlertTitle>This action cannot be undone</AlertTitle>
+          <AlertDescription>
+            All {{ selectedMenu?.itemCount || 0 }} menu items will be permanently deleted along with this menu.
+          </AlertDescription>
+        </Alert>
+
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">
+            Cancel
+          </Button>
+          <Button variant="destructive" :disabled="isSubmitting" @click="deleteMenu">
+            Delete Menu
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -1,11 +1,20 @@
 <script setup lang="ts">
+import { Plus, Pencil, Trash2, Search, Box } from 'lucide-vue-next'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@spavn/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@spavn/ui'
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'publisher-admin',
 })
 
 const route = useRoute()
-const toast = useToast()
+const { toast } = useToast()
 const typeName = computed(() => route.params.type as string)
 
 // Fetch content type config
@@ -95,10 +104,10 @@ async function deleteEntry() {
   try {
     await $fetch(`/api/v1/${typeName.value}/${entryToDelete.value}`, { method: 'DELETE' })
     await refresh()
-    toast.add({ title: 'Entry deleted', color: 'success' })
+    toast({ title: 'Entry deleted' })
   }
   catch {
-    toast.add({ title: 'Failed to delete entry', color: 'error' })
+    toast({ title: 'Failed to delete entry', variant: 'destructive' })
   }
   finally {
     showDeleteModal.value = false
@@ -112,13 +121,13 @@ function formatDate(dateStr: unknown): string {
 }
 
 function getStatusDotClass(status: string): string {
-  if (status === 'published') return 'bg-green-600 dark:bg-green-400'
-  return 'bg-amber-500 dark:bg-amber-400'
+  if (status === 'published') return 'bg-[hsl(var(--accent))]'
+  return 'bg-[hsl(var(--muted-foreground))]'
 }
 
 function getStatusTextClass(status: string): string {
-  if (status === 'published') return 'text-green-600 dark:text-green-400'
-  return 'text-amber-500 dark:text-amber-400'
+  if (status === 'published') return 'text-[hsl(var(--accent-foreground))]'
+  return 'text-[hsl(var(--muted-foreground))]'
 }
 </script>
 
@@ -126,128 +135,143 @@ function getStatusTextClass(status: string): string {
   <div>
     <!-- Page header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100">
+      <h2 class="text-2xl font-bold text-[hsl(var(--foreground))]">
         {{ contentType?.displayName || typeName }}
       </h2>
-      <UButton
-        icon="i-heroicons-plus"
-        color="neutral"
-        :to="`/admin/content/${typeName}/new`"
-      >
-        Create Entry
-      </UButton>
+      <Button as-child variant="outline">
+        <NuxtLink :to="`/admin/content/${typeName}/new`">
+          <Plus class="h-4 w-4 mr-2" />
+          Create Entry
+        </NuxtLink>
+      </Button>
     </div>
 
     <!-- Filter bar -->
     <div class="flex items-center gap-4 mb-4">
-      <UInput
-        v-model="search"
-        placeholder="Search..."
-        icon="i-heroicons-magnifying-glass"
-        class="w-64"
-      />
-      <USelectMenu
+      <div class="relative w-64">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+        <Input
+          v-model="search"
+          placeholder="Search..."
+          class="pl-9"
+        />
+      </div>
+      <Select
         v-if="contentType?.options?.draftAndPublish"
         v-model="statusFilter"
-        :items="statusOptions"
-        value-key="value"
-        placeholder="Status"
-        class="w-40"
-      />
+      >
+        <SelectTrigger class="w-40">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
 
     <!-- Table card -->
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <UTable
-        :data="entries"
-        :columns="columns"
-        :loading="status === 'pending'"
-      >
-        <template #status-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <span
-              class="w-2 h-2 rounded-full"
-              :class="getStatusDotClass(row.original.status as string || 'draft')"
-            />
-            <span
-              class="text-sm capitalize"
-              :class="getStatusTextClass(row.original.status as string || 'draft')"
-            >
-              {{ row.original.status || 'draft' }}
-            </span>
-          </div>
-        </template>
-
-        <template #updatedAt-cell="{ row }">
-          <span class="text-sm text-stone-500 dark:text-stone-400">
-            {{ formatDate(row.original.updatedAt) }}
-          </span>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center gap-1">
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-heroicons-pencil"
-              :to="`/admin/content/${typeName}/${row.original.id}`"
-            />
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="error"
-              icon="i-heroicons-trash"
-              @click.stop="entryToDelete = row.original.id as number; showDeleteModal = true"
-            />
-          </div>
-        </template>
-      </UTable>
+    <div class="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead v-for="col in columns" :key="col.accessorKey || col.id" :class="col.id === 'actions' ? 'w-[100px]' : ''">
+              {{ col.header }}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="status === 'pending'">
+            <TableCell :colspan="columns.length" class="text-center py-8 text-[hsl(var(--muted-foreground))]">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-for="row in entries" :key="row.id as number">
+            <template v-for="col in columns" :key="col.accessorKey || col.id">
+              <TableCell v-if="col.accessorKey === 'status'">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    :class="getStatusDotClass(row.status as string || 'draft')"
+                  />
+                  <span
+                    class="text-sm capitalize"
+                    :class="getStatusTextClass(row.status as string || 'draft')"
+                  >
+                    {{ row.status || 'draft' }}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell v-else-if="col.accessorKey === 'updatedAt'" class="text-sm text-[hsl(var(--muted-foreground))]">
+                {{ formatDate(row.updatedAt) }}
+              </TableCell>
+              <TableCell v-else-if="col.id === 'actions'">
+                <div class="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" as-child>
+                    <NuxtLink :to="`/admin/content/${typeName}/${row.id}`">
+                      <Pencil class="h-4 w-4" />
+                    </NuxtLink>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    @click.stop="entryToDelete = row.id as number; showDeleteModal = true"
+                  >
+                    <Trash2 class="h-4 w-4 text-[hsl(var(--destructive))]" />
+                  </Button>
+                </div>
+              </TableCell>
+              <TableCell v-else class="text-sm">
+                {{ row[col.accessorKey!] }}
+              </TableCell>
+            </template>
+          </TableRow>
+        </TableBody>
+      </Table>
 
       <!-- Empty state -->
       <div v-if="entries.length === 0 && status !== 'pending'" class="text-center py-12">
-        <UIcon
-          :name="contentType?.icon || 'i-heroicons-inbox'"
-          class="text-4xl text-stone-400 dark:text-stone-500 mb-3"
-        />
-        <p class="text-stone-500 dark:text-stone-400">No entries yet.</p>
-        <UButton
-          class="mt-3"
-          variant="outline"
-          color="neutral"
-          :to="`/admin/content/${typeName}/new`"
-        >
-          Create your first entry
-        </UButton>
+        <Box class="h-10 w-10 mx-auto text-[hsl(var(--muted-foreground))] mb-3" />
+        <p class="text-[hsl(var(--muted-foreground))]">No entries yet.</p>
+        <Button class="mt-3" variant="outline" as-child>
+          <NuxtLink :to="`/admin/content/${typeName}/new`">
+            Create your first entry
+          </NuxtLink>
+        </Button>
       </div>
 
       <!-- Pagination -->
-      <div v-if="pagination.pageCount > 1" class="flex items-center justify-between px-4 py-3 border-t border-stone-200 dark:border-stone-800">
-        <p class="text-sm text-stone-500 dark:text-stone-400">
+      <div v-if="pagination.pageCount > 1" class="flex items-center justify-between px-4 py-3 border-t border-[hsl(var(--border))]">
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
           Showing {{ ((pagination.page - 1) * pageSize) + 1 }}–{{ Math.min(pagination.page * pageSize, pagination.total) }} of {{ pagination.total }}
         </p>
-        <UPagination
-          v-model="page"
-          :total="pagination.total"
-          :items-per-page="pageSize"
-        />
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious :disabled="page <= 1" @click="page = Math.max(1, page - 1)" />
+            </PaginationItem>
+            <PaginationItem>
+              <span class="text-sm text-[hsl(var(--muted-foreground))] px-3">Page {{ page }} of {{ pagination.pageCount }}</span>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext :disabled="page >= pagination.pageCount" @click="page = Math.min(pagination.pageCount, page + 1)" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
 
     <!-- Delete confirmation -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">Delete Entry</h3>
-          <p class="text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete this entry? {{ contentType?.options?.softDelete ? 'It will be soft-deleted and can be recovered.' : 'This action cannot be undone.' }}
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="showDeleteModal = false">Cancel</UButton>
-            <UButton color="error" @click="deleteEntry">Delete</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Entry</DialogTitle>
+        </DialogHeader>
+        <p class="text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete this entry? {{ contentType?.options?.softDelete ? 'It will be soft-deleted and can be recovered.' : 'This action cannot be undone.' }}
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" @click="showDeleteModal = false">Cancel</Button>
+          <Button variant="destructive" @click="deleteEntry">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

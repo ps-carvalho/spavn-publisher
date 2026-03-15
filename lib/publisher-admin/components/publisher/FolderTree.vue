@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import type { FolderTreeNode as BaseFolderTreeNode } from '#server/utils/publisher/folders'
+import { Button } from '@spavn/ui'
+import { Input } from '@spavn/ui'
+import { Label } from '@spavn/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@spavn/ui'
+import { useToast } from '@spavn/ui'
+import { Image, FolderOpen, FolderPlus, Pencil, Maximize, Trash2, Folder } from 'lucide-vue-next'
 
 // Extended type with optional mediaCount for UI display
 interface FolderTreeNode extends BaseFolderTreeNode {
@@ -31,7 +37,7 @@ const emit = defineEmits<{
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
-const toast = useToast()
+const { toast } = useToast()
 
 // Track expanded folders by ID
 const expandedFolders = ref<Set<number>>(new Set())
@@ -86,10 +92,10 @@ function onContextMenu(event: MouseEvent, folder: FolderTreeNode | null) {
 }
 
 const contextMenuItems = computed(() => {
-  const items: Array<{ label: string; icon: string; click?: () => void }> = [
+  const items: Array<{ label: string; iconComponent: any; click?: () => void }> = [
     {
       label: 'New Folder',
-      icon: 'i-heroicons-folder-plus',
+      iconComponent: FolderPlus,
       click: () => openCreateDialog(),
     },
   ]
@@ -98,17 +104,17 @@ const contextMenuItems = computed(() => {
     items.push(
       {
         label: 'Rename',
-        icon: 'i-heroicons-pencil',
+        iconComponent: Pencil,
         click: () => openRenameDialog(),
       },
       {
         label: 'Move',
-        icon: 'i-heroicons-arrows-pointing-out',
+        iconComponent: Maximize,
         click: () => openMoveDialog(),
       },
       {
         label: 'Delete',
-        icon: 'i-heroicons-trash',
+        iconComponent: Trash2,
         click: () => openDeleteDialog(),
       },
     )
@@ -132,7 +138,7 @@ function openCreateDialog() {
 function handleCreate() {
   const name = newFolderName.value.trim()
   if (!name) {
-    toast.add({ title: 'Folder name is required', color: 'error' })
+    toast({ title: 'Folder name is required', variant: 'destructive' })
     return
   }
 
@@ -154,7 +160,7 @@ function openRenameDialog() {
 function handleRename() {
   const name = renameFolderName.value.trim()
   if (!name) {
-    toast.add({ title: 'Folder name is required', color: 'error' })
+    toast({ title: 'Folder name is required', variant: 'destructive' })
     return
   }
 
@@ -278,9 +284,9 @@ function isDescendant(folder: FolderTreeNode, targetId: number): boolean {
   <div class="folder-tree">
     <!-- Loading state -->
     <div v-if="loading" class="p-4 space-y-2">
-      <div class="animate-pulse h-8 bg-stone-200 dark:bg-stone-800 rounded" />
-      <div class="animate-pulse h-8 bg-stone-200 dark:bg-stone-800 rounded w-3/4" />
-      <div class="animate-pulse h-8 bg-stone-200 dark:bg-stone-800 rounded w-1/2" />
+      <div class="animate-pulse h-8 bg-[hsl(var(--muted))] rounded" />
+      <div class="animate-pulse h-8 bg-[hsl(var(--muted))] rounded w-3/4" />
+      <div class="animate-pulse h-8 bg-[hsl(var(--muted))] rounded w-1/2" />
     </div>
 
     <!-- Tree content -->
@@ -290,9 +296,9 @@ function isDescendant(folder: FolderTreeNode, targetId: number): boolean {
         class="folder-item root-item group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors"
         :class="[
           isRootActive
-            ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-medium'
-            : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800',
-          dragOverFolderId === 0 ? 'ring-2 ring-amber-500 ring-inset' : '',
+            ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))] font-medium'
+            : 'text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]',
+          dragOverFolderId === 0 ? 'ring-2 ring-[hsl(var(--primary))] ring-inset' : '',
         ]"
         @click="selectFolder(null)"
         @contextmenu="onContextMenu($event, null)"
@@ -300,7 +306,7 @@ function isDescendant(folder: FolderTreeNode, targetId: number): boolean {
         @dragleave="onDragLeave"
         @drop="onDrop($event, null)"
       >
-        <UIcon name="i-heroicons-photo" class="w-5 h-5 flex-shrink-0" />
+        <Image class="w-5 h-5 flex-shrink-0" />
         <span class="flex-1 truncate text-sm">{{ rootName }}</span>
       </div>
 
@@ -327,17 +333,16 @@ function isDescendant(folder: FolderTreeNode, targetId: number): boolean {
 
       <!-- Empty state -->
       <div v-else class="mt-4 text-center py-6">
-        <UIcon name="i-heroicons-folder-open" class="w-8 h-8 text-stone-400 dark:text-stone-500 mx-auto mb-2" />
-        <p class="text-sm text-stone-500 dark:text-stone-400">No folders yet</p>
-        <UButton
+        <FolderOpen class="w-8 h-8 text-[hsl(var(--muted-foreground))] mx-auto mb-2" />
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">No folders yet</p>
+        <Button
           variant="ghost"
-          size="xs"
-          color="neutral"
+          size="sm"
           class="mt-2"
           @click="contextMenuFolder = null; openCreateDialog()"
         >
           Create folder
-        </UButton>
+        </Button>
       </div>
     </template>
 
@@ -345,18 +350,18 @@ function isDescendant(folder: FolderTreeNode, targetId: number): boolean {
     <Teleport to="body">
       <div
         v-if="contextMenuOpen"
-        class="fixed z-50 min-w-48 py-1 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg shadow-lg"
+        class="fixed z-50 min-w-48 py-1 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg shadow-lg"
         :style="{ left: `${contextMenuPosition.x}px`, top: `${contextMenuPosition.y}px` }"
       >
         <template v-for="(group, groupIndex) in contextMenuItems" :key="groupIndex">
-          <hr v-if="groupIndex > 0" class="my-1 border-stone-200 dark:border-stone-700">
+          <hr v-if="groupIndex > 0" class="my-1 border-[hsl(var(--border))]">
           <button
             v-for="(item, itemIndex) in group"
             :key="itemIndex"
-            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] transition-colors"
             @click="item.click"
           >
-            <UIcon :name="item.icon" class="w-4 h-4" />
+            <component :is="item.iconComponent" class="w-4 h-4" />
             {{ item.label }}
           </button>
         </template>
@@ -371,156 +376,150 @@ function isDescendant(folder: FolderTreeNode, targetId: number): boolean {
     </Teleport>
 
     <!-- Create Folder Dialog -->
-    <UModal v-model:open="createDialogOpen">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
-            Create New Folder
-          </h3>
-          <p v-if="contextMenuFolder" class="text-sm text-stone-500 dark:text-stone-400 mb-3">
-            Inside: {{ contextMenuFolder.name }}
-          </p>
-          <UFormField label="Folder Name" required class="mb-4">
-            <UInput
-              v-model="newFolderName"
-              placeholder="Enter folder name"
-              autofocus
-              @keyup.enter="handleCreate"
-            />
-          </UFormField>
-          <div class="flex justify-end gap-3">
-            <UButton variant="ghost" color="neutral" @click="createDialogOpen = false">
-              Cancel
-            </UButton>
-            <UButton color="neutral" @click="handleCreate">
-              Create
-            </UButton>
-          </div>
+    <Dialog v-model:open="createDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Folder</DialogTitle>
+        </DialogHeader>
+        <p v-if="contextMenuFolder" class="text-sm text-[hsl(var(--muted-foreground))]">
+          Inside: {{ contextMenuFolder.name }}
+        </p>
+        <div class="space-y-2">
+          <Label>Folder Name</Label>
+          <Input
+            v-model="newFolderName"
+            placeholder="Enter folder name"
+            autofocus
+            @keyup.enter="handleCreate"
+          />
         </div>
-      </template>
-    </UModal>
+        <DialogFooter>
+          <Button variant="ghost" @click="createDialogOpen = false">
+            Cancel
+          </Button>
+          <Button @click="handleCreate">
+            Create
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Rename Folder Dialog -->
-    <UModal v-model:open="renameDialogOpen">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
-            Rename Folder
-          </h3>
-          <UFormField label="Folder Name" required class="mb-4">
-            <UInput
-              v-model="renameFolderName"
-              placeholder="Enter new name"
-              autofocus
-              @keyup.enter="handleRename"
-            />
-          </UFormField>
-          <div class="flex justify-end gap-3">
-            <UButton variant="ghost" color="neutral" @click="renameDialogOpen = false">
-              Cancel
-            </UButton>
-            <UButton color="neutral" @click="handleRename">
-              Rename
-            </UButton>
-          </div>
+    <Dialog v-model:open="renameDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rename Folder</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-2">
+          <Label>Folder Name</Label>
+          <Input
+            v-model="renameFolderName"
+            placeholder="Enter new name"
+            autofocus
+            @keyup.enter="handleRename"
+          />
         </div>
-      </template>
-    </UModal>
+        <DialogFooter>
+          <Button variant="ghost" @click="renameDialogOpen = false">
+            Cancel
+          </Button>
+          <Button @click="handleRename">
+            Rename
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Delete Folder Dialog -->
-    <UModal v-model:open="deleteDialogOpen">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-            Delete Folder
-          </h3>
-          <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
-            Are you sure you want to delete "{{ contextMenuFolder?.name }}"?
+    <Dialog v-model:open="deleteDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Folder</DialogTitle>
+        </DialogHeader>
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+          Are you sure you want to delete "{{ contextMenuFolder?.name }}"?
+        </p>
+
+        <div class="bg-[hsl(var(--muted))] rounded-lg p-4">
+          <p class="text-sm font-medium text-[hsl(var(--foreground))] mb-3">
+            What should happen to items inside?
           </p>
-
-          <div class="bg-stone-50 dark:bg-stone-800 rounded-lg p-4 mb-4">
-            <p class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
-              What should happen to items inside?
-            </p>
-            <div class="space-y-2">
-              <label class="flex items-start gap-3 cursor-pointer">
-                <URadio v-model="deleteMode" value="move" name="deleteMode" />
-                <div>
-                  <span class="text-sm font-medium text-stone-700 dark:text-stone-300">Move to root</span>
-                  <span class="block text-xs text-stone-500 dark:text-stone-400">
-                    Move all items to the root folder
-                  </span>
-                </div>
-              </label>
-              <label class="flex items-start gap-3 cursor-pointer">
-                <URadio v-model="deleteMode" value="recursive" name="deleteMode" />
-                <div>
-                  <span class="text-sm font-medium text-stone-700 dark:text-stone-300">Delete all</span>
-                  <span class="block text-xs text-red-500 dark:text-red-400">
-                    Permanently delete folder and all contents
-                  </span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <UButton variant="ghost" color="neutral" @click="deleteDialogOpen = false">
-              Cancel
-            </UButton>
-            <UButton color="error" @click="handleDelete">
-              Delete
-            </UButton>
+          <div class="space-y-2">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input v-model="deleteMode" type="radio" value="move" name="deleteMode" class="mt-1" />
+              <div>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Move to root</span>
+                <span class="block text-xs text-[hsl(var(--muted-foreground))]">
+                  Move all items to the root folder
+                </span>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input v-model="deleteMode" type="radio" value="recursive" name="deleteMode" class="mt-1" />
+              <div>
+                <span class="text-sm font-medium text-[hsl(var(--foreground))]">Delete all</span>
+                <span class="block text-xs text-[hsl(var(--destructive))]">
+                  Permanently delete folder and all contents
+                </span>
+              </div>
+            </label>
           </div>
         </div>
-      </template>
-    </UModal>
+
+        <DialogFooter>
+          <Button variant="ghost" @click="deleteDialogOpen = false">
+            Cancel
+          </Button>
+          <Button variant="destructive" @click="handleDelete">
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Move Folder Dialog -->
-    <UModal v-model:open="moveDialogOpen">
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
-            Move Folder
-          </h3>
-          <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
-            Select a new parent folder for "{{ contextMenuFolder?.name }}"
-          </p>
+    <Dialog v-model:open="moveDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Move Folder</DialogTitle>
+        </DialogHeader>
+        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+          Select a new parent folder for "{{ contextMenuFolder?.name }}"
+        </p>
 
-          <div class="border border-stone-200 dark:border-stone-700 rounded-lg max-h-64 overflow-y-auto mb-4">
-            <!-- Root option -->
-            <button
-              class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-              :class="moveTargetId === null ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400' : 'text-stone-700 dark:text-stone-300'"
-              @click="moveTargetId = null"
-            >
-              <UIcon name="i-heroicons-photo" class="w-5 h-5" />
-              <span>Media Library (root)</span>
-            </button>
+        <div class="border border-[hsl(var(--border))] rounded-lg max-h-64 overflow-y-auto">
+          <!-- Root option -->
+          <button
+            class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[hsl(var(--accent))] transition-colors"
+            :class="moveTargetId === null ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))]'"
+            @click="moveTargetId = null"
+          >
+            <Image class="w-5 h-5" />
+            <span>Media Library (root)</span>
+          </button>
 
-            <!-- Folder options -->
-            <button
-              v-for="folder in getMoveTargetFolders()"
-              :key="folder.id"
-              class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-              :class="moveTargetId === folder.id ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400' : 'text-stone-700 dark:text-stone-300'"
-              @click="moveTargetId = folder.id"
-            >
-              <UIcon name="i-heroicons-folder" class="w-5 h-5" />
-              <span>{{ folder.path }}</span>
-            </button>
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <UButton variant="ghost" color="neutral" @click="moveDialogOpen = false">
-              Cancel
-            </UButton>
-            <UButton color="neutral" @click="handleMove">
-              Move
-            </UButton>
-          </div>
+          <!-- Folder options -->
+          <button
+            v-for="folder in getMoveTargetFolders()"
+            :key="folder.id"
+            class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[hsl(var(--accent))] transition-colors"
+            :class="moveTargetId === folder.id ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))]'"
+            @click="moveTargetId = folder.id"
+          >
+            <Folder class="w-5 h-5" />
+            <span>{{ folder.path }}</span>
+          </button>
         </div>
-      </template>
-    </UModal>
+
+        <DialogFooter>
+          <Button variant="ghost" @click="moveDialogOpen = false">
+            Cancel
+          </Button>
+          <Button @click="handleMove">
+            Move
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -3,7 +3,7 @@
 # CORTEX &ensp; <img src="https://img.shields.io/badge/PUBLISHER-F59E0B?style=for-the-badge" alt="Publisher" />
 
 **Developer-first headless CMS built on Nuxt 4.**<br>
-Define. Generate. Ship. With zero config.
+Define content models in code. Generate APIs automatically. Ship with zero config.
 
 [![Nuxt](https://img.shields.io/badge/Nuxt-4.3.1-00DC82?logo=nuxt.js)](https://nuxt.com/)
 [![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?logo=vue.js)](https://vuejs.org/)
@@ -12,7 +12,7 @@ Define. Generate. Ship. With zero config.
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://postgresql.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[Quick Start](#quick-start) &ensp;&bull;&ensp; [Content Types](#content-types) &ensp;&bull;&ensp; [REST API](#rest-api) &ensp;&bull;&ensp; [Database](#database) &ensp;&bull;&ensp; [Storage](#storage) &ensp;&bull;&ensp; [Admin UI](#admin-ui) &ensp;&bull;&ensp; [Configuration](#configuration)
+[Quick Start](#quick-start) • [Content Types](#content-types) • [REST API](#rest-api) • [Authentication](#authentication) • [Database](#database) • [Storage](#storage) • [Admin UI](#admin-ui)
 
 </div>
 
@@ -26,22 +26,34 @@ Publisher is a headless CMS for developers who want full control over their cont
 - **Admin Dashboard** — A complete admin UI at `/admin` for content management
 - **Multi-Database** — SQLite (zero-config) or PostgreSQL (production-ready) via a single env var
 - **Cloud Storage** — Local filesystem, Cloudflare R2, or S3-compatible storage
-- **JWT Auth** — Session cookies for admin, API tokens for headless access
+- **Multi-Method Auth** — JWT sessions, API tokens, TOTP, WebAuthn/passkeys, and magic links
+- **Page Builder** — Modular page composition with reusable content blocks
 
 ## Features
 
+### Core CMS
 - **Content Type System** — Define models with `defineContentType()` and 14+ field types
 - **Auto-generated APIs** — RESTful CRUD with filtering, sorting, and pagination
 - **Admin Dashboard** — Full-featured UI for content, media, users, and settings
 - **Media Library** — Upload, organize in folders, auto-generate image variants
-- **Page Builder** — Modular page composition with 18 block types
-- **Multi-Database** — SQLite for dev, PostgreSQL for production — same codebase
-- **Cloud Storage** — Local, Cloudflare R2, or S3 with hot-swap support
-- **Authentication** — JWT sessions + API tokens with role-based access
-- **Webhooks** — Trigger external services on content events
+- **Page Builder** — Modular page composition with 18+ block types
+- **Menu System** — Hierarchical navigation with drag-and-drop reordering
 - **Draft & Publish** — Built-in workflow with draft/published states
 - **Soft Delete** — Recover deleted content with trash functionality
-- **Folder Permissions** — RBAC folder-level access control for media
+
+### Authentication & Security
+- **Multi-Method Auth** — Passwordless magic links, TOTP (authenticator apps), WebAuthn/passkeys
+- **Device Tracking** — Automatic device fingerprinting with new-device alerts
+- **Rate Limiting** — Built-in protection against brute-force attacks
+- **RBAC** — Role-based access control with 4 built-in roles (Super Admin, Admin, Editor, Viewer)
+- **API Tokens** — Generate tokens for headless API access
+- **JWT Sessions** — Secure session management with configurable expiry
+
+### Infrastructure
+- **Multi-Database** — SQLite for dev, PostgreSQL for production — same codebase
+- **Cloud Storage** — Local, Cloudflare R2, or S3 with hot-swap support
+- **Webhooks** — Trigger external services on content events
+- **Email Integration** — SMTP, SendGrid, or console (dev) for transactional emails
 
 ## Tech Stack
 
@@ -52,8 +64,9 @@ Publisher is a headless CMS for developers who want full control over their cont
 | Database | [SQLite](https://sqlite.org/) or [PostgreSQL](https://postgresql.org/) |
 | ORM | [Drizzle ORM](https://orm.drizzle.team/) |
 | Validation | [Zod](https://zod.dev/) |
-| Auth | [jose](https://github.com/panva/jose) (JWT) |
-| Storage | Local / [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) / S3 |
+| Auth | [jose](https://github.com/panva/jose) (JWT), [otpauth](https://github.com/hectorm/otpauth) (TOTP), [@simplewebauthn](https://simplewebauthn.dev/) |
+| Storage | [@aws-sdk/client-s3](https://aws.amazon.com/s3/) (S3-compatible) |
+| Email | [nodemailer](https://nodemailer.com/), [@sendgrid/mail](https://sendgrid.com/) |
 
 ---
 
@@ -103,13 +116,13 @@ Open [http://localhost:3000/admin](http://localhost:3000/admin) — login with `
 
 ## Content Types
 
-Define content models in `content-types/` using `defineContentType()`. Publisher auto-generates the database table, REST API, and admin UI.
+Define content models in the `content-types/` directory using `defineContentType()`. Publisher auto-generates the database table, REST API, and admin UI.
 
 ### Example
 
 ```typescript
 // content-types/article.ts
-import { defineContentType } from '../lib/publisher/defineContentType'
+import { defineContentType } from './lib/publisher/defineContentType'
 
 export default defineContentType({
   name: 'article',
@@ -184,7 +197,7 @@ GET /api/v1/articles?filters[views][$gte]=100
 GET /api/v1/articles?sort=createdAt:desc
 ```
 
-Operators: `$contains`, `$gt`, `$gte`, `$lt`, `$lte`, `$ne`
+**Operators:** `$contains`, `$gt`, `$gte`, `$lt`, `$lte`, `$ne`
 
 ### Authentication
 
@@ -195,6 +208,53 @@ curl -H "Authorization: Bearer your-api-token" \
 
 # Health check (no auth required)
 curl https://your-cms.com/api/publisher/health
+```
+
+---
+
+## Authentication
+
+Publisher supports multiple authentication methods out of the box. All methods can be enabled simultaneously.
+
+### Available Methods
+
+| Method | Description | Best For |
+|--------|-------------|----------|
+| **Magic Links** | Passwordless email-based login | Occasional users, editors |
+| **TOTP** | Time-based one-time passwords (Google Authenticator, Authy) | Security-conscious users |
+| **WebAuthn/Passkeys** | Biometric authentication (Touch ID, Face ID, Windows Hello) | Modern devices, passwordless |
+| **API Tokens** | Bearer tokens for programmatic access | Headless integrations |
+
+### Device Security
+
+- **Device Fingerprinting** — Automatic tracking of login devices
+- **New Device Alerts** — Email notifications when unrecognized devices log in
+- **Trusted Devices** — Mark devices as trusted to skip 2FA on future logins
+
+### Configuration
+
+See `publisher.config.ts` for auth settings:
+
+```typescript
+auth: {
+  tokenExpiry: '7d',
+  cookieName: 'publisher-session',
+  hashAlgorithm: 'pbkdf2',
+  iterations: 100_000,
+}
+
+totp: {
+  issuer: 'Publisher CMS',
+  digits: 6,
+  period: 30,
+  window: 1, // ±30 seconds tolerance
+}
+
+webauthn: {
+  rpName: 'Publisher CMS',
+  rpID: 'localhost', // Change to your domain in production
+  origin: 'http://localhost:3000',
+}
 ```
 
 ---
@@ -271,7 +331,7 @@ curl http://localhost:3000/api/publisher/health
 
 ## Storage
 
-Publisher supports multiple storage backends for file uploads.
+Publisher supports multiple storage backends for file uploads. Configure in `publisher.config.ts` or via environment variables.
 
 | Provider | Best For | Config |
 |----------|----------|--------|
@@ -279,7 +339,35 @@ Publisher supports multiple storage backends for file uploads.
 | **Cloudflare R2** | Production, zero egress fees | `PUBLISHER_R2_*` env vars |
 | **S3-compatible** | AWS, MinIO, DigitalOcean Spaces | `PUBLISHER_S3_*` env vars |
 
-Configure in `publisher.config.ts` or via environment variables. See `.env.example` for all options.
+### Image Processing
+
+Uploaded images automatically generate variants:
+
+| Variant | Size | Use Case |
+|---------|------|----------|
+| `thumbnail` | 245px | Thumbnails, previews |
+| `small` | 500px | Small displays |
+| `medium` | 750px | Standard content |
+| `large` | 1000px | Full-width images |
+
+### Configuration
+
+```typescript
+storage: {
+  defaultProvider: 'local',
+  providers: {
+    local: {
+      type: 'local',
+      basePath: './public/uploads',
+      baseUrl: '/uploads',
+      default: true,
+    },
+    // R2 and S3 configurations available
+  },
+}
+```
+
+See `.env.example` for all storage environment variables.
 
 ---
 
@@ -300,11 +388,21 @@ Access the admin dashboard at `/admin`.
 
 | Section | Path | Description |
 |---------|------|-------------|
+| Dashboard | `/admin` | Overview, quick actions |
 | Content | `/admin/content/[type]` | Manage entries for each content type |
 | Media | `/admin/media` | Upload, organize in folders, image variants |
 | Pages | `/admin/pages` | Page builder with modular blocks |
+| Menus | `/admin/menus` | Hierarchical navigation menus |
 | Types | `/admin/types` | View registered content types |
-| Settings | `/admin/settings` | Users, tokens, webhooks |
+| Users | `/admin/users` | User management, role assignment |
+| Settings | `/admin/settings` | Tokens, webhooks, system config |
+
+### Design System
+
+- **Primary Color:** Amber (`amber-600`)
+- **Neutrals:** Stone palette
+- **Components:** Nuxt UI (unstyled, accessible)
+- **Dark Mode:** Full system preference support
 
 ---
 
@@ -319,21 +417,43 @@ export default {
   defaultAdmin: {
     email: 'admin@publisher.local',
     password: 'admin',
+    firstName: 'Admin',
+    lastName: 'User',
   },
 
-  database: {
-    provider: 'sqlite',           // 'sqlite' | 'postgres'
-    sqlitePath: '.data/publisher.db',
+  features: {
+    allowMultipleAuthMethods: true,
   },
 
   auth: {
     tokenExpiry: '7d',
     cookieName: 'publisher-session',
-    saltRounds: 12,
+    hashAlgorithm: 'pbkdf2',
+    iterations: 100_000,
+  },
+
+  totp: {
+    issuer: 'Publisher CMS',
+    digits: 6,
+    period: 30,
+    window: 1,
+  },
+
+  webauthn: {
+    rpName: 'Publisher CMS',
+    rpID: 'localhost',
+    origin: 'http://localhost:3000',
+  },
+
+  security: {
+    notifyNewDevices: true,
+    maxDevicesPerUser: 10,
+    deviceTracking: true,
   },
 
   uploads: {
-    maxFileSize: 10 * 1024 * 1024,  // 10MB
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
     imageSizes: {
       thumbnail: 245,
       small: 500,
@@ -342,11 +462,32 @@ export default {
     },
   },
 
+  pagination: {
+    defaultPageSize: 25,
+    maxPageSize: 100,
+  },
+
   roles: {
-    'super-admin': { label: 'Super Admin' },
-    'admin':       { label: 'Admin' },
-    'editor':      { label: 'Editor' },
-    'viewer':      { label: 'Viewer' },
+    'super-admin': { label: 'Super Admin', description: 'Full access' },
+    'admin':       { label: 'Admin', description: 'Content + users' },
+    'editor':      { label: 'Editor', description: 'Own content' },
+    'viewer':      { label: 'Viewer', description: 'Read-only' },
+  },
+
+  database: {
+    provider: 'postgres',
+    url: process.env.DATABASE_URL,
+    poolSize: 10,
+  },
+
+  storage: {
+    defaultProvider: 'local',
+    providers: { /* ... */ },
+  },
+
+  email: {
+    defaultProvider: 'console',
+    providers: { /* ... */ },
   },
 }
 ```
@@ -357,9 +498,13 @@ export default {
 |----------|----------|---------|-------------|
 | `PUBLISHER_SECRET` | Yes | — | JWT signing secret |
 | `DATABASE_URL` | No | SQLite | `postgresql://...` for PostgreSQL |
-| `PUBLISHER_UPLOAD_DIR` | No | `public/uploads` | Upload directory |
-| `PUBLISHER_R2_*` | No | — | Cloudflare R2 credentials |
-| `PUBLISHER_S3_*` | No | — | S3-compatible credentials |
+| `PUBLISHER_RP_ID` | No | `localhost` | WebAuthn relying party ID |
+| `PUBLISHER_TOTP_ISSUER` | No | `Publisher CMS` | TOTP issuer name |
+| `PUBLISHER_EMAIL_PROVIDER` | No | `console` | Email provider (smtp/sendgrid/console) |
+| `PUBLISHER_STORAGE_DEFAULT` | No | `local` | Storage provider |
+| `PUBLISHER_UPLOAD_DIR` | No | `public/uploads` | Local upload directory |
+
+See `.env.example` for the complete list.
 
 ---
 
@@ -369,44 +514,88 @@ export default {
 npm run dev          # Start dev server
 npm run build        # Build for production
 npm run preview      # Preview production build
+npm run test         # Run tests
+npm run test:watch   # Watch mode
 ```
 
 ### Project Structure
 
 ```
 cortex-publisher/
-├── app/                          # Nuxt frontend
-│   ├── components/publisher/     # Admin UI components
-│   └── pages/admin/              # Admin pages
+├── app/                          # Nuxt application
+│   ├── assets/                   # CSS, images
+│   ├── layouts/                  # App layouts
+│   └── pages/                    # App pages
 │
-├── content-types/                # Content type definitions
-├── block-types/                  # Page builder block types (18 blocks)
-├── page-types/                   # Page type definitions
-│
-├── lib/publisher/                # Core library
-│   ├── defineContentType.ts      # Content type helper
-│   └── types.ts                  # TypeScript types
+├── lib/
+│   ├── publisher/                # Core CMS library
+│   │   ├── defineContentType.ts  # Content type helper
+│   │   ├── defineBlockType.ts    # Block type helper
+│   │   ├── defineMenu.ts         # Menu helper
+│   │   └── types.ts              # TypeScript types
+│   │
+│   └── publisher-admin/          # Admin UI layer
+│       ├── components/           # Reusable components
+│       ├── composables/          # Vue composables
+│       ├── middleware/           # Auth middleware
+│       ├── pages/                # Admin pages
+│       └── nuxt.config.ts        # Layer config
 │
 ├── server/
-│   ├── api/v1/                   # Auto-generated content APIs
-│   ├── api/publisher/            # Admin APIs (auth, media, users, webhooks)
-│   ├── plugins/publisher-db.ts   # Database initialization
-│   └── utils/publisher/
-│       ├── database/             # Multi-database abstraction layer
-│       │   ├── index.ts          # Provider factory (SQLite/PostgreSQL)
-│       │   ├── queries.ts        # Dialect-aware query helpers
-│       │   ├── dialect.ts        # SQL dialect helpers
-│       │   └── schema/           # Drizzle schema (sqlite.ts, postgres.ts)
-│       ├── storage/              # Multi-storage abstraction layer
-│       │   ├── registry.ts       # Storage provider registry
-│       │   └── providers/        # Local, R2, S3 providers
-│       ├── schemaCompiler.ts     # Dynamic DDL generation
-│       └── registry.ts           # Content type registry
+│   ├── api/
+│   │   ├── v1/                   # Auto-generated content APIs
+│   │   └── publisher/            # Admin APIs
+│   │       ├── auth/             # Authentication endpoints
+│   │       ├── media/            # Media management
+│   │       ├── users/            # User management
+│   │       ├── webhooks/         # Webhook management
+│   │       └── health.get.ts     # Health check
+│   │
+│   ├── core/                     # Core server utilities
+│   ├── database/                 # Database utilities
+│   ├── middleware/               # Server middleware
+│   ├── plugins/                  # Server plugins
+│   └── utils/
+│       └── publisher/            # Publisher utilities
+│           ├── database/         # Multi-database layer
+│           ├── storage/          # Multi-storage layer
+│           ├── email/            # Email providers
+│           ├── auth.ts           # Auth utilities
+│           ├── totp.ts           # TOTP handling
+│           ├── webauthn.ts       # WebAuthn handling
+│           ├── magicLink.ts      # Magic link emails
+│           ├── deviceFingerprint.ts
+│           ├── rateLimit.ts      # Rate limiting
+│           ├── webhooks.ts       # Webhook dispatcher
+│           └── schemaCompiler.ts # Dynamic schema generation
 │
-├── publisher.config.ts           # Publisher configuration
-├── docker-compose.yml            # PostgreSQL for development
-└── nuxt.config.ts                # Nuxt configuration
+├── docs/                         # Documentation
+│   ├── UserGuide/                # User documentation
+│   ├── features/                 # Feature specs
+│   ├── decisions/                # Architecture decisions
+│   └── flows/                    # Process flows
+│
+├── .spavn/                       # Design & planning
+│   ├── design-spec.md            # Design specification
+│   └── plans/                    # Development plans
+│
+├── publisher.config.ts           # CMS configuration
+├── nuxt.config.ts                # Nuxt configuration
+├── drizzle.config.ts             # Drizzle ORM config
+├── docker-compose.yml            # PostgreSQL for dev
+└── package.json
 ```
+
+---
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[User Guide](docs/UserGuide/)** — Content management, media library, user administration
+- **[Features](docs/features/)** — Feature specifications and implementation details
+- **[Decisions](docs/decisions/)** — Architecture decision records (ADRs)
+- **[Flows](docs/flows/)** — API and user interaction flow diagrams
 
 ---
 
@@ -420,4 +609,4 @@ cortex-publisher/
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
